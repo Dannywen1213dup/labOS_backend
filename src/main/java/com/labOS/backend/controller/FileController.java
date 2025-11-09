@@ -6,7 +6,7 @@ import com.labOS.backend.common.ErrorCode;
 import com.labOS.backend.common.ResultUtils;
 import com.labOS.backend.constant.FileConstant;
 import com.labOS.backend.exception.BusinessException;
-import com.labOS.backend.manager.CosManager;
+import com.labOS.backend.manager.S3Manager;
 import com.labOS.backend.model.dto.file.UploadFileRequest;
 import com.labOS.backend.model.entity.User;
 import com.labOS.backend.model.enums.FileUploadBizEnum;
@@ -38,7 +38,7 @@ public class FileController {
     private UserService userService;
 
     @Resource
-    private CosManager cosManager;
+    private S3Manager s3Manager;
 
     /**
      * 文件上传
@@ -67,9 +67,9 @@ public class FileController {
             // 上传文件
             file = File.createTempFile(filepath, null);
             multipartFile.transferTo(file);
-            cosManager.putObject(filepath, file);
+            s3Manager.putObject(filepath, file);
             // 返回可访问地址
-            return ResultUtils.success(FileConstant.COS_HOST + filepath);
+            return ResultUtils.success(FileConstant.S3_HOST + filepath);
         } catch (Exception e) {
             log.error("file upload error, filepath = " + filepath, e);
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "上传失败");

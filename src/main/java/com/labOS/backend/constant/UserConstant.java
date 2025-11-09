@@ -16,7 +16,7 @@ public interface UserConstant {
     //  region 权限
 
     /**
-     * 默认角色
+     * default role constant for user
      */
     String DEFAULT_ROLE = "user";
 

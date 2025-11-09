@@ -82,10 +82,9 @@ wx:
   open:
     appId: xxx
     appSecret: xxx
-# 对象存储
-# todo 需替换配置
-cos:
-  client:
+# AWS S3 对象存储
+aws:
+  s3:
     accessKey: xxx
     secretKey: xxx
     region: xxx
