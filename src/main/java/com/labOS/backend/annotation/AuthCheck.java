@@ -1,0 +1,26 @@
+package com.labOS.backend.annotation;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+/**
+ * 权限校验
+ *
+ * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
+ * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
+ */
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface AuthCheck {
+
+    /**
+     * 必须有某个角色
+     *
+     * @return
+     */
+    String mustRole() default "";
+
+}
+
