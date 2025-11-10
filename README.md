@@ -3,7 +3,7 @@
 > Author：[Yifan Wen](https://github.com/Dannywen1213dup)
 > Shared [ai4labOS](https://www.ai4labos.com/)
 
-A SpringBoot project initial template based on Java, integrating common frameworks and sample code for mainstream business scenarios.
+A SpringBoot project initial based on Java for ai4labOS website, integrating common frameworks of login and log out feature and uploading files.
 
  
  
