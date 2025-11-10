@@ -24,8 +24,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 帖子收藏接口
  *
+ * Post collection interface
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
  */
@@ -44,11 +44,11 @@ public class PostFavourController {
     private UserService userService;
 
     /**
-     * 收藏 / 取消收藏
      *
+     * Add to favorites / Remove from favorites
      * @param postFavourAddRequest
      * @param request
-     * @return resultNum 收藏变化数
+     * @return resultNum Collection number changes
      */
     @PostMapping("/")
     public BaseResponse<Integer> doPostFavour(@RequestBody PostFavourAddRequest postFavourAddRequest,
@@ -56,7 +56,7 @@ public class PostFavourController {
         if (postFavourAddRequest == null || postFavourAddRequest.getPostId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        // 登录才能操作
+        // Log in to operate
         final User loginUser = userService.getLoginUser(request);
         long postId = postFavourAddRequest.getPostId();
         int result = postFavourService.doPostFavour(postId, loginUser);
@@ -64,7 +64,7 @@ public class PostFavourController {
     }
 
     /**
-     * 获取我收藏的帖子列表
+     * Get my saved posts list
      *
      * @param postQueryRequest
      * @param request
@@ -78,7 +78,7 @@ public class PostFavourController {
         User loginUser = userService.getLoginUser(request);
         long current = postQueryRequest.getCurrent();
         long size = postQueryRequest.getPageSize();
-        // 限制爬虫
+        // Limit crawlers
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
         Page<Post> postPage = postFavourService.listFavourPostByPage(new Page<>(current, size),
                 postService.getQueryWrapper(postQueryRequest), loginUser.getId());
@@ -86,7 +86,7 @@ public class PostFavourController {
     }
 
     /**
-     * 获取用户收藏的帖子列表
+     * Get the list of posts saved by the user
      *
      * @param postFavourQueryRequest
      * @param request
@@ -100,7 +100,7 @@ public class PostFavourController {
         long current = postFavourQueryRequest.getCurrent();
         long size = postFavourQueryRequest.getPageSize();
         Long userId = postFavourQueryRequest.getUserId();
-        // 限制爬虫
+        // Limit crawlers
         ThrowUtils.throwIf(size > 20 || userId == null, ErrorCode.PARAMS_ERROR);
         Page<Post> postPage = postFavourService.listFavourPostByPage(new Page<>(current, size),
                 postService.getQueryWrapper(postFavourQueryRequest.getPostQueryRequest()), userId);

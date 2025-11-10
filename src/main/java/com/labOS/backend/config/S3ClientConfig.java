@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * AWS S3 客户端配置
+ * AWS S3 Client Configuration
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -21,30 +21,30 @@ import org.springframework.context.annotation.Configuration;
 public class S3ClientConfig {
 
     /**
-     * accessKey
+     * AWS Access Key
      */
     private String accessKey;
 
     /**
-     * secretKey
+     * AWS Secret Key
      */
     private String secretKey;
 
     /**
-     * 区域
+     * AWS Region
      */
     private String region;
 
     /**
-     * 桶名
+     * S3 Bucket Name
      */
     private String bucket;
 
     @Bean
     public AmazonS3 amazonS3Client() {
-        // 初始化用户身份信息
+        // Initialize AWS credentials
         BasicAWSCredentials awsCredentials = new BasicAWSCredentials(accessKey, secretKey);
-        // 创建 S3 客户端
+        // Create S3 client
         return AmazonS3ClientBuilder.standard()
                 .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
                 .withRegion(region)

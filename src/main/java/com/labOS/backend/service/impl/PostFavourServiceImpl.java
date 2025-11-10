@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 帖子收藏服务实现
+ * Post favor service implementation
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -32,7 +32,7 @@ public class PostFavourServiceImpl extends ServiceImpl<PostFavourMapper, PostFav
     private PostService postService;
 
     /**
-     * 帖子收藏
+     * Favor post
      *
      * @param postId
      * @param loginUser
@@ -40,15 +40,15 @@ public class PostFavourServiceImpl extends ServiceImpl<PostFavourMapper, PostFav
      */
     @Override
     public int doPostFavour(long postId, User loginUser) {
-        // 判断是否存在
+        // Check if post exists
         Post post = postService.getById(postId);
         if (post == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
-        // 是否已帖子收藏
+        // Check if already favored
         long userId = loginUser.getId();
-        // 每个用户串行帖子收藏
-        // 锁必须要包裹住事务方法
+        // Serial favor for each user
+        // Lock must wrap the transaction method
         PostFavourService postFavourService = (PostFavourService) AopContext.currentProxy();
         synchronized (String.valueOf(userId).intern()) {
             return postFavourService.doPostFavourInner(userId, postId);
@@ -64,7 +64,7 @@ public class PostFavourServiceImpl extends ServiceImpl<PostFavourMapper, PostFav
     }
 
     /**
-     * 封装了事务的方法
+     * Transactional method
      *
      * @param userId
      * @param postId
@@ -79,11 +79,11 @@ public class PostFavourServiceImpl extends ServiceImpl<PostFavourMapper, PostFav
         QueryWrapper<PostFavour> postFavourQueryWrapper = new QueryWrapper<>(postFavour);
         PostFavour oldPostFavour = this.getOne(postFavourQueryWrapper);
         boolean result;
-        // 已收藏
+        // Already favored
         if (oldPostFavour != null) {
             result = this.remove(postFavourQueryWrapper);
             if (result) {
-                // 帖子收藏数 - 1
+                // Post favor count - 1
                 result = postService.update()
                         .eq("id", postId)
                         .gt("favourNum", 0)
@@ -94,10 +94,10 @@ public class PostFavourServiceImpl extends ServiceImpl<PostFavourMapper, PostFav
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR);
             }
         } else {
-            // 未帖子收藏
+            // Not favored
             result = this.save(postFavour);
             if (result) {
-                // 帖子收藏数 + 1
+                // Post favor count + 1
                 result = postService.update()
                         .eq("id", postId)
                         .setSql("favourNum = favourNum + 1")

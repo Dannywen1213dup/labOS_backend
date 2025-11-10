@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 帖子点赞服务实现
+ * Post thumb service implementation
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -29,7 +29,7 @@ public class PostThumbServiceImpl extends ServiceImpl<PostThumbMapper, PostThumb
     private PostService postService;
 
     /**
-     * 点赞
+     * Thumb post
      *
      * @param postId
      * @param loginUser
@@ -37,15 +37,15 @@ public class PostThumbServiceImpl extends ServiceImpl<PostThumbMapper, PostThumb
      */
     @Override
     public int doPostThumb(long postId, User loginUser) {
-        // 判断实体是否存在，根据类别获取实体
+        // Check if entity exists, get entity by type
         Post post = postService.getById(postId);
         if (post == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
-        // 是否已点赞
+        // Check if already thumbed
         long userId = loginUser.getId();
-        // 每个用户串行点赞
-        // 锁必须要包裹住事务方法
+        // Serial thumb for each user
+        // Lock must wrap the transaction method
         PostThumbService postThumbService = (PostThumbService) AopContext.currentProxy();
         synchronized (String.valueOf(userId).intern()) {
             return postThumbService.doPostThumbInner(userId, postId);
@@ -53,7 +53,7 @@ public class PostThumbServiceImpl extends ServiceImpl<PostThumbMapper, PostThumb
     }
 
     /**
-     * 封装了事务的方法
+     * Transactional method
      *
      * @param userId
      * @param postId
@@ -68,11 +68,11 @@ public class PostThumbServiceImpl extends ServiceImpl<PostThumbMapper, PostThumb
         QueryWrapper<PostThumb> thumbQueryWrapper = new QueryWrapper<>(postThumb);
         PostThumb oldPostThumb = this.getOne(thumbQueryWrapper);
         boolean result;
-        // 已点赞
+        // Already thumbed
         if (oldPostThumb != null) {
             result = this.remove(thumbQueryWrapper);
             if (result) {
-                // 点赞数 - 1
+                // Thumb count - 1
                 result = postService.update()
                         .eq("id", postId)
                         .gt("thumbNum", 0)
@@ -83,10 +83,10 @@ public class PostThumbServiceImpl extends ServiceImpl<PostThumbMapper, PostThumb
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR);
             }
         } else {
-            // 未点赞
+            // Not thumbed
             result = this.save(postThumb);
             if (result) {
-                // 点赞数 + 1
+                // Thumb count + 1
                 result = postService.update()
                         .eq("id", postId)
                         .setSql("thumbNum = thumbNum + 1")

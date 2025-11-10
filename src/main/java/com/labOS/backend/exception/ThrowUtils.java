@@ -3,7 +3,7 @@ package com.labOS.backend.exception;
 import com.labOS.backend.common.ErrorCode;
 
 /**
- * 抛异常工具类
+ * Exception throwing util class
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -11,7 +11,7 @@ import com.labOS.backend.common.ErrorCode;
 public class ThrowUtils {
 
     /**
-     * 条件成立则抛异常
+     * Throw an exception if the condition is met
      *
      * @param condition
      * @param runtimeException
@@ -23,7 +23,7 @@ public class ThrowUtils {
     }
 
     /**
-     * 条件成立则抛异常
+     * Throw an exception if the condition is met
      *
      * @param condition
      * @param errorCode
@@ -33,7 +33,7 @@ public class ThrowUtils {
     }
 
     /**
-     * 条件成立则抛异常
+     * Throw an exception if the condition is met
      *
      * @param condition
      * @param errorCode

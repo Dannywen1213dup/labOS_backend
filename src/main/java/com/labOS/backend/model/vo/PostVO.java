@@ -9,7 +9,7 @@ import lombok.Data;
 import org.springframework.beans.BeanUtils;
 
 /**
- * 帖子视图
+ * Post view object
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -18,67 +18,67 @@ import org.springframework.beans.BeanUtils;
 public class PostVO implements Serializable {
 
     /**
-     * id
+     * Id
      */
     private Long id;
 
     /**
-     * 标题
+     * Title
      */
     private String title;
 
     /**
-     * 内容
+     * Content
      */
     private String content;
 
     /**
-     * 点赞数
+     * Thumb count
      */
     private Integer thumbNum;
 
     /**
-     * 收藏数
+     * Favour count
      */
     private Integer favourNum;
 
     /**
-     * 创建用户 id
+     * Creator user id
      */
     private Long userId;
 
     /**
-     * 创建时间
+     * Create time
      */
     private Date createTime;
 
     /**
-     * 更新时间
+     * Update time
      */
     private Date updateTime;
 
     /**
-     * 标签列表
+     * Tag list
      */
     private List<String> tagList;
 
     /**
-     * 创建人信息
+     * Creator user information
      */
     private UserVO user;
 
     /**
-     * 是否已点赞
+     * Has thumbed
      */
     private Boolean hasThumb;
 
     /**
-     * 是否已收藏
+     * Has favoured
      */
     private Boolean hasFavour;
 
     /**
-     * 包装类转对象
+     * Convert VO to entity
      *
      * @param postVO
      * @return
@@ -95,7 +95,7 @@ public class PostVO implements Serializable {
     }
 
     /**
-     * 对象转包装类
+     * Convert entity to VO
      *
      * @param post
      * @return

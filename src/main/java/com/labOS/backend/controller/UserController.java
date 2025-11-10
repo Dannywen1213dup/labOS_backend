@@ -39,7 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
 import static com.labOS.backend.service.impl.UserServiceImpl.SALT;
 
 /**
- * 用户接口
+ * User Interface
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -53,10 +53,10 @@ public class UserController {
     private UserService userService;
 
 
-    // region 登录相关
+    // region Login related
 
     /**
-     * 用户注册
+     * User registration
      *
      * @param userRegisterRequest
      * @return
@@ -77,7 +77,7 @@ public class UserController {
     }
 
     /**
-     * 用户登录
+     * User login
      *
      * @param userLoginRequest
      * @param request
@@ -100,7 +100,7 @@ public class UserController {
 
 
     /**
-     * 用户注销
+     * User logout
      *
      * @param request
      * @return
@@ -115,7 +115,7 @@ public class UserController {
     }
 
     /**
-     * 获取当前登录用户
+     * Get current logged-in user
      *
      * @param request
      * @return
@@ -128,10 +128,10 @@ public class UserController {
 
     // endregion
 
-    // region 增删改查
+    // region CRUD
 
     /**
-     * 创建用户
+     * Create user
      *
      * @param userAddRequest
      * @param request
@@ -145,7 +145,7 @@ public class UserController {
         }
         User user = new User();
         BeanUtils.copyProperties(userAddRequest, user);
-        // 默认密码 12345678
+        // Default password 12345678
         String defaultPassword = "12345678";
         String encryptPassword = DigestUtils.md5DigestAsHex((SALT + defaultPassword).getBytes());
         user.setUserPassword(encryptPassword);
@@ -155,7 +155,7 @@ public class UserController {
     }
 
     /**
-     * 删除用户
+     * Delete user
      *
      * @param deleteRequest
      * @param request
@@ -172,7 +172,7 @@ public class UserController {
     }
 
     /**
-     * 更新用户
+     * Update user
      *
      * @param userUpdateRequest
      * @param request
@@ -193,7 +193,7 @@ public class UserController {
     }
 
     /**
-     * 根据 id 获取用户（仅管理员）
+     * Get user by id (admin only)
      *
      * @param id
      * @param request
@@ -211,7 +211,7 @@ public class UserController {
     }
 
     /**
-     * 根据 id 获取包装类
+     * Get VO by id
      *
      * @param id
      * @param request
@@ -225,7 +225,7 @@ public class UserController {
     }
 
     /**
-     * 分页获取用户列表（仅管理员）
+     * Get user list by page (admin only)
      *
      * @param userQueryRequest
      * @param request
@@ -243,7 +243,7 @@ public class UserController {
     }
 
     /**
-     * 分页获取用户封装列表
+     * Get user VO list by page
      *
      * @param userQueryRequest
      * @param request
@@ -257,7 +257,7 @@ public class UserController {
         }
         long current = userQueryRequest.getCurrent();
         long size = userQueryRequest.getPageSize();
-        // 限制爬虫
+        // Limit crawlers
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
         Page<User> userPage = userService.page(new Page<>(current, size),
                 userService.getQueryWrapper(userQueryRequest));
@@ -270,7 +270,7 @@ public class UserController {
     // endregion
 
     /**
-     * 更新个人信息
+     * Update personal information
      *
      * @param userUpdateMyRequest
      * @param request

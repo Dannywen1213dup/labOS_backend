@@ -13,62 +13,62 @@ import java.io.FileWriter;
 import java.io.Writer;
 
 /**
- * 代码生成器
+ * Code generator
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
- * @from <a href="https://www.code-nav.cn">编程导航学习圈</a>
+ * 
  */
 public class CodeGenerator {
 
     /**
-     * 用法：修改生成参数和生成路径，注释掉不需要的生成逻辑，然后运行即可
+     * Usage: Modify generation parameters and paths, comment out unnecessary generation logic, then run
      *
      * @param args
      * @throws TemplateException
      * @throws IOException
      */
     public static void main(String[] args) throws TemplateException, IOException {
-        // 指定生成参数
+        // Specify generation parameters
         String packageName = "com.labOS.backend";
-        String dataName = "用户评论";
+        String dataName = "User Comment";
         String dataKey = "userComment";
         String upperDataKey = "UserComment";
 
-        // 封装生成参数
+        // Encapsulate generation parameters
         Map<String, Object> dataModel = new HashMap<>();
         dataModel.put("packageName", packageName);
         dataModel.put("dataName", dataName);
         dataModel.put("dataKey", dataKey);
         dataModel.put("upperDataKey", upperDataKey);
 
-        // 生成路径默认值
+        // Default generation path
         String projectPath = System.getProperty("user.dir");
-        // 参考路径，可以自己调整下面的 outputPath
-        String inputPath = projectPath + File.separator + "src/main/resources/templates/模板名称.java.ftl";
-        String outputPath = String.format("%s/generator/包名/%s类后缀.java", projectPath, upperDataKey);
+        // Reference path, you can adjust the outputPath below
+        String inputPath = projectPath + File.separator + "src/main/resources/templates/TemplateName.java.ftl";
+        String outputPath = String.format("%s/generator/package/%sSuffix.java", projectPath, upperDataKey);
 
-        // 1、生成 Controller
-        // 指定生成路径
+        // 1. Generate Controller
+        // Specify generation path
         inputPath = projectPath + File.separator + "src/main/resources/templates/TemplateController.java.ftl";
         outputPath = String.format("%s/generator/controller/%sController.java", projectPath, upperDataKey);
-        // 生成
+        // Generate
         doGenerate(inputPath, outputPath, dataModel);
-        System.out.println("生成 Controller 成功，文件路径：" + outputPath);
+        System.out.println("Controller generated successfully, file path: " + outputPath);
 
-        // 2、生成 Service 接口和实现类
-        // 生成 Service 接口
+        // 2. Generate Service interface and implementation
+        // Generate Service interface
         inputPath = projectPath + File.separator + "src/main/resources/templates/TemplateService.java.ftl";
         outputPath = String.format("%s/generator/service/%sService.java", projectPath, upperDataKey);
         doGenerate(inputPath, outputPath, dataModel);
-        System.out.println("生成 Service 接口成功，文件路径：" + outputPath);
-        // 生成 Service 实现类
+        System.out.println("Service interface generated successfully, file path: " + outputPath);
+        // Generate Service implementation
         inputPath = projectPath + File.separator + "src/main/resources/templates/TemplateServiceImpl.java.ftl";
         outputPath = String.format("%s/generator/service/impl/%sServiceImpl.java", projectPath, upperDataKey);
         doGenerate(inputPath, outputPath, dataModel);
-        System.out.println("生成 Service 实现类成功，文件路径：" + outputPath);
+        System.out.println("Service implementation generated successfully, file path: " + outputPath);
 
-        // 3、生成数据模型封装类（包括 DTO 和 VO）
-        // 生成 DTO
+        // 3. Generate data model classes (including DTO and VO)
+        // Generate DTO
         inputPath = projectPath + File.separator + "src/main/resources/templates/model/TemplateAddRequest.java.ftl";
         outputPath = String.format("%s/generator/model/dto/%sAddRequest.java", projectPath, upperDataKey);
         doGenerate(inputPath, outputPath, dataModel);
@@ -81,48 +81,48 @@ public class CodeGenerator {
         inputPath = projectPath + File.separator + "src/main/resources/templates/model/TemplateUpdateRequest.java.ftl";
         outputPath = String.format("%s/generator/model/dto/%sUpdateRequest.java", projectPath, upperDataKey);
         doGenerate(inputPath, outputPath, dataModel);
-        System.out.println("生成 DTO 成功，文件路径：" + outputPath);
-        // 生成 VO
+        System.out.println("DTO generated successfully, file path: " + outputPath);
+        // Generate VO
         inputPath = projectPath + File.separator + "src/main/resources/templates/model/TemplateVO.java.ftl";
         outputPath = String.format("%s/generator/model/vo/%sVO.java", projectPath, upperDataKey);
         doGenerate(inputPath, outputPath, dataModel);
-        System.out.println("生成 VO 成功，文件路径：" + outputPath);
+        System.out.println("VO generated successfully, file path: " + outputPath);
     }
 
     /**
-     * 生成文件
+     * Generate file
      *
-     * @param inputPath  模板文件输入路径
-     * @param outputPath 输出路径
-     * @param model      数据模型
+     * @param inputPath  Template file input path
+     * @param outputPath Output path
+     * @param model      Data model
      * @throws IOException
      * @throws TemplateException
      */
     public static void doGenerate(String inputPath, String outputPath, Object model) throws IOException, TemplateException {
-        // new 出 Configuration 对象，参数为 FreeMarker 版本号
+        // Create Configuration object with FreeMarker version number
         Configuration configuration = new Configuration(Configuration.VERSION_2_3_31);
 
-        // 指定模板文件所在的路径
+        // Specify template file directory
         File templateDir = new File(inputPath).getParentFile();
         configuration.setDirectoryForTemplateLoading(templateDir);
 
-        // 设置模板文件使用的字符集
+        // Set character encoding for template files
         configuration.setDefaultEncoding("utf-8");
 
-        // 创建模板对象，加载指定模板
+        // Create template object and load specified template
         String templateName = new File(inputPath).getName();
         Template template = configuration.getTemplate(templateName);
 
-        // 文件不存在则创建文件和父目录
+        // Create file and parent directory if not exists
         if (!FileUtil.exist(outputPath)) {
             FileUtil.touch(outputPath);
         }
 
-        // 生成
+        // Generate
         Writer out = new FileWriter(outputPath);
         template.process(model, out);
 
-        // 生成文件后别忘了关闭哦
+        // Don't forget to close after generating file
         out.close();
     }
 }

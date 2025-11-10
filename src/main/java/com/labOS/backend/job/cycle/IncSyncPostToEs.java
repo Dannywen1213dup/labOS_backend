@@ -13,12 +13,12 @@ import cn.hutool.core.collection.CollUtil;
 import org.springframework.scheduling.annotation.Scheduled;
 
 /**
- * 增量同步帖子到 es
+ * Incremental sync posts to ES
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
  */
-// todo 取消注释开启任务
+// todo Uncomment to enable task
 //@Component
 @Slf4j
 public class IncSyncPostToEs {
@@ -30,11 +30,11 @@ public class IncSyncPostToEs {
     private PostEsDao postEsDao;
 
     /**
-     * 每分钟执行一次
+     * Execute every minute
      */
     @Scheduled(fixedRate = 60 * 1000)
     public void run() {
-        // 查询近 5 分钟内的数据
+        // Query data from the last 5 minutes
         Date fiveMinutesAgoDate = new Date(new Date().getTime() - 5 * 60 * 1000L);
         List<Post> postList = postMapper.listPostWithDelete(fiveMinutesAgoDate);
         if (CollUtil.isEmpty(postList)) {

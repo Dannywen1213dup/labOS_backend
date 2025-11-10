@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 /**
- * 全局异常处理器
+ * Global exception handler
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -26,6 +26,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     public BaseResponse<?> runtimeExceptionHandler(RuntimeException e) {
         log.error("RuntimeException", e);
-        return ResultUtils.error(ErrorCode.SYSTEM_ERROR, "系统错误");
+        return ResultUtils.error(ErrorCode.SYSTEM_ERROR, "system error");
     }
 }

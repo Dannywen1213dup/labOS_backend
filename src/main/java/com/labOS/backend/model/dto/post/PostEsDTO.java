@@ -16,12 +16,12 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * 帖子 ES 包装类
+ * Post ES wrapper class
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
  **/
-// todo 取消注释开启 ES（须先配置 ES）
+// todo Uncomment to enable ES (ES must be configured first)
 //@Document(indexName = "post")
 @Data
 public class PostEsDTO implements Serializable {
@@ -29,62 +29,62 @@ public class PostEsDTO implements Serializable {
     private static final String DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 
     /**
-     * id
+     * Id
      */
     @Id
     private Long id;
 
     /**
-     * 标题
+     * Title
      */
     private String title;
 
     /**
-     * 内容
+     * Content
      */
     private String content;
 
     /**
-     * 标签列表
+     * Tag list
      */
     private List<String> tags;
 
     /**
-     * 点赞数
+     * Thumb count
      */
     private Integer thumbNum;
 
     /**
-     * 收藏数
+     * Favour count
      */
     private Integer favourNum;
 
     /**
-     * 创建用户 id
+     * Creator user id
      */
     private Long userId;
 
     /**
-     * 创建时间
+     * Create time
      */
     @Field(index = false, store = true, type = FieldType.Date, format = {}, pattern = DATE_TIME_PATTERN)
     private Date createTime;
 
     /**
-     * 更新时间
+     * Update time
      */
     @Field(index = false, store = true, type = FieldType.Date, format = {}, pattern = DATE_TIME_PATTERN)
     private Date updateTime;
 
     /**
-     * 是否删除
+     * Is deleted
      */
     private Integer isDelete;
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * 对象转包装类
+     * Convert entity to DTO
      *
      * @param post
      * @return
@@ -103,7 +103,7 @@ public class PostEsDTO implements Serializable {
     }
 
     /**
-     * 包装类转对象
+     * Convert DTO to entity
      *
      * @param postEsDTO
      * @return

@@ -5,7 +5,7 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * 查询上传进度请求
+ * Query upload progress request
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -14,8 +14,8 @@ import java.io.Serializable;
 public class UploadProgressRequest implements Serializable {
 
     /**
-     * 文件夹路径
-     * 格式: labOS/{uuid}/{MMDDYYYY}/{count}
+     * Folder path
+     * Format: labOS/{uuid}/{MMDDYYYY}/{count}
      */
     private String folderPath;
 

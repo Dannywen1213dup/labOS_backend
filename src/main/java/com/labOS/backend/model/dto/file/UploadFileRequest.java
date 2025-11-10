@@ -4,7 +4,7 @@ import java.io.Serializable;
 import lombok.Data;
 
 /**
- * 文件上传请求
+ * Upload file request
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -13,7 +13,7 @@ import lombok.Data;
 public class UploadFileRequest implements Serializable {
 
     /**
-     * 业务
+     * Business type
      */
     private String biz;
 

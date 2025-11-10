@@ -9,7 +9,7 @@ import java.util.Date;
 import lombok.Data;
 
 /**
- * 帖子收藏
+ * Post favour
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -19,28 +19,28 @@ import lombok.Data;
 public class PostFavour implements Serializable {
 
     /**
-     * id
+     * Id
      */
     @TableId(type = IdType.AUTO)
     private Long id;
 
     /**
-     * 帖子 id
+     * Post id
      */
     private Long postId;
 
     /**
-     * 创建用户 id
+     * Creator user id
      */
     private Long userId;
 
     /**
-     * 创建时间
+     * Create time
      */
     private Date createTime;
 
     /**
-     * 更新时间
+     * Update time
      */
     private Date updateTime;
 

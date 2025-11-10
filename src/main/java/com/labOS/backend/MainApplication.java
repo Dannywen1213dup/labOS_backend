@@ -8,12 +8,12 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
- * 主类（项目启动入口）
+ * Main class (project startup entry)
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
  */
-// todo 如需开启 Redis，须移除 exclude 中的内容
+// todo If Redis needs to be enabled, remove the content in exclude
 @SpringBootApplication(exclude = {RedisAutoConfiguration.class})
 @MapperScan("com.labOS.backend.mapper")
 @EnableScheduling

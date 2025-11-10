@@ -1,7 +1,7 @@
 package com.labOS.backend.constant;
 
 /**
- * 用户常量
+ * user constant
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -9,11 +9,11 @@ package com.labOS.backend.constant;
 public interface UserConstant {
 
     /**
-     * 用户登录态键
+     * user login states
      */
     String USER_LOGIN_STATE = "user_login";
 
-    //  region 权限
+    //  region rights
 
     /**
      * default role constant for user
@@ -21,12 +21,12 @@ public interface UserConstant {
     String DEFAULT_ROLE = "user";
 
     /**
-     * 管理员角色
+     *  admin role
      */
     String ADMIN_ROLE = "admin";
 
     /**
-     * 被封号
+     *  banned
      */
     String BAN_ROLE = "ban";
 

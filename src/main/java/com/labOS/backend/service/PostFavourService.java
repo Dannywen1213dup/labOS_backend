@@ -9,7 +9,7 @@ import com.labOS.backend.model.entity.PostFavour;
 import com.labOS.backend.model.entity.User;
 
 /**
- * 帖子收藏服务
+ * Post collection service
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -17,7 +17,7 @@ import com.labOS.backend.model.entity.User;
 public interface PostFavourService extends IService<PostFavour> {
 
     /**
-     * 帖子收藏
+     * Post collection
      *
      * @param postId
      * @param loginUser
@@ -26,7 +26,7 @@ public interface PostFavourService extends IService<PostFavour> {
     int doPostFavour(long postId, User loginUser);
 
     /**
-     * 分页获取用户收藏的帖子列表
+     * Retrieving a list of user-favorited posts via pagination
      *
      * @param page
      * @param queryWrapper
@@ -37,7 +37,7 @@ public interface PostFavourService extends IService<PostFavour> {
             long favourUserId);
 
     /**
-     * 帖子收藏（内部服务）
+     * Post saving (internal service)
      *
      * @param userId
      * @param postId

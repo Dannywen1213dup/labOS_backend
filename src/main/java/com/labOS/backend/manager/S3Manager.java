@@ -18,7 +18,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 /**
- * S3 对象存储操作
+ * S3 Object Storage Operations
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -36,10 +36,10 @@ public class S3Manager {
     private static final String PROJECT_PREFIX = "labOS";
 
     /**
-     * 上传对象
+     * Upload object to S3
      *
-     * @param key  唯一键
-     * @param file 文件
+     * @param key  unique key
+     * @param file file to upload
      * @return PutObjectResult
      */
     public PutObjectResult putObject(String key, File file) {
@@ -48,11 +48,11 @@ public class S3Manager {
     }
 
     /**
-     * 上传对象（输入流方式）
+     * Upload object to S3 using input stream
      *
-     * @param key         唯一键
-     * @param inputStream 输入流
-     * @param metadata    元数据
+     * @param key         unique key
+     * @param inputStream input stream
+     * @param metadata    object metadata
      * @return PutObjectResult
      */
     public PutObjectResult putObject(String key, InputStream inputStream, ObjectMetadata metadata) {
@@ -61,10 +61,10 @@ public class S3Manager {
     }
 
     /**
-     * 检查文件夹是否存在
+     * Check if folder exists
      *
-     * @param folderPath 文件夹路径
-     * @return 是否存在
+     * @param folderPath folder path
+     * @return true if exists
      */
     public boolean doesFolderExist(String folderPath) {
         if (!folderPath.endsWith("/")) {
@@ -79,9 +79,9 @@ public class S3Manager {
     }
 
     /**
-     * 创建文件夹（通过创建一个空对象实现）
+     * Create folder (by creating an empty object)
      *
-     * @param folderPath 文件夹路径
+     * @param folderPath folder path
      */
     public void createFolder(String folderPath) {
         if (!folderPath.endsWith("/")) {
@@ -96,38 +96,38 @@ public class S3Manager {
     }
 
     /**
-     * 获取或创建上传文件夹路径，并返回次数
-     * 文件夹结构: labOS/{uuid}/{MMDDYYYY}/{count}/
+     * Get or create upload folder path and return the count
+     * Folder structure: labOS/{uuid}/{MMDDYYYY}/{count}/
      *
-     * @param uuid 用户UUID
-     * @return 完整的文件夹路径
+     * @param uuid user UUID
+     * @return complete folder path
      */
     public String getOrCreateUploadFolder(String uuid) {
-        // 构建基础路径
+        // Build base path
         String basePath = PROJECT_PREFIX + "/" + uuid + "/";
         
-        // 获取今天的日期 (MMDDYYYY格式)
+        // Get today's date (MMDDYYYY format)
         LocalDate today = LocalDate.now();
         String dateFolder = today.format(DateTimeFormatter.ofPattern("MMddyyyy"));
         String datePath = basePath + dateFolder + "/";
 
-        // 检查 UUID 文件夹是否存在，不存在则创建
+        // Check if UUID folder exists, create if not
         if (!doesFolderExist(basePath)) {
             createFolder(basePath);
             log.info("Created UUID folder: {}", basePath);
         }
 
-        // 检查日期文件夹是否存在，不存在则创建
+        // Check if date folder exists, create if not
         if (!doesFolderExist(datePath)) {
             createFolder(datePath);
             log.info("Created date folder: {}", datePath);
         }
 
-        // 查找今天的最大次数
+        // Find the maximum count for today
         int maxCount = getMaxCountForDate(datePath);
         int nextCount = maxCount + 1;
 
-        // 创建新的次数文件夹
+        // Create new count folder
         String countPath = datePath + nextCount + "/";
         createFolder(countPath);
         log.info("Created count folder: {}", countPath);
@@ -136,10 +136,10 @@ public class S3Manager {
     }
 
     /**
-     * 获取指定日期文件夹下的最大次数
+     * Get the maximum count under the specified date folder
      *
-     * @param datePath 日期文件夹路径
-     * @return 最大次数
+     * @param datePath date folder path
+     * @return maximum count
      */
     private int getMaxCountForDate(String datePath) {
         ListObjectsV2Request request = new ListObjectsV2Request()
@@ -158,7 +158,7 @@ public class S3Manager {
                     maxCount = count;
                 }
             } catch (NumberFormatException e) {
-                // 忽略非数字文件夹
+                // Ignore non-numeric folders
             }
         }
 
@@ -166,16 +166,16 @@ public class S3Manager {
     }
 
     /**
-     * 删除文件夹及其所有内容
+     * Delete folder and all its contents
      *
-     * @param folderPath 文件夹路径
+     * @param folderPath folder path
      */
     public void deleteFolder(String folderPath) {
         if (!folderPath.endsWith("/")) {
             folderPath = folderPath + "/";
         }
 
-        // 列出所有对象
+        // List all objects
         ListObjectsV2Request request = new ListObjectsV2Request()
                 .withBucketName(s3ClientConfig.getBucket())
                 .withPrefix(folderPath);
@@ -194,24 +194,24 @@ public class S3Manager {
     }
 
     /**
-     * 获取文件夹下所有文件并打包成 ZIP
+     * Download all files in folder and package as ZIP
      *
-     * @param folderPath 文件夹路径
-     * @return ZIP 文件的临时文件
-     * @throws IOException IO异常
+     * @param folderPath folder path
+     * @return ZIP file as temporary file
+     * @throws IOException IO exception
      */
     public File downloadFolderAsZip(String folderPath) throws IOException {
         if (!folderPath.endsWith("/")) {
             folderPath = folderPath + "/";
         }
 
-        // 创建临时 ZIP 文件
+        // Create temporary ZIP file
         File zipFile = File.createTempFile("download-", ".zip");
         
         try (FileOutputStream fos = new FileOutputStream(zipFile);
              ZipOutputStream zos = new ZipOutputStream(fos)) {
 
-            // 列出文件夹下所有文件
+            // List all files in folder
             ListObjectsV2Request request = new ListObjectsV2Request()
                     .withBucketName(s3ClientConfig.getBucket())
                     .withPrefix(folderPath);
@@ -222,18 +222,18 @@ public class S3Manager {
                 for (S3ObjectSummary objectSummary : result.getObjectSummaries()) {
                     String key = objectSummary.getKey();
                     
-                    // 跳过文件夹标记对象
+                    // Skip folder marker objects
                     if (key.endsWith("/")) {
                         continue;
                     }
 
-                    // 下载文件
+                    // Download file
                     S3Object s3Object = amazonS3.getObject(s3ClientConfig.getBucket(), key);
                     
-                    // 获取相对路径作为 ZIP 内的文件名
+                    // Get relative path as file name in ZIP
                     String fileName = key.replace(folderPath, "");
                     
-                    // 添加到 ZIP
+                    // Add to ZIP
                     ZipEntry zipEntry = new ZipEntry(fileName);
                     zos.putNextEntry(zipEntry);
                     
@@ -256,11 +256,11 @@ public class S3Manager {
     }
 
     /**
-     * 生成预签名 URL
+     * Generate presigned URL
      *
-     * @param key            对象键
-     * @param expirationTime 过期时间（毫秒）
-     * @return 预签名 URL
+     * @param key            object key
+     * @param expirationTime expiration time in milliseconds
+     * @return presigned URL
      */
     public String generatePresignedUrl(String key, long expirationTime) {
         Date expiration = new Date(System.currentTimeMillis() + expirationTime);
@@ -269,10 +269,10 @@ public class S3Manager {
     }
 
     /**
-     * 获取上传进度（返回文件夹中的文件数量）
+     * Get upload progress (return file count in folder)
      *
-     * @param folderPath 文件夹路径
-     * @return 文件数量
+     * @param folderPath folder path
+     * @return file count
      */
     public int getUploadProgress(String folderPath) {
         if (!folderPath.endsWith("/")) {
@@ -288,7 +288,7 @@ public class S3Manager {
         do {
             result = amazonS3.listObjectsV2(request);
             for (S3ObjectSummary objectSummary : result.getObjectSummaries()) {
-                // 只计算文件，不计算文件夹
+                // Only count files, not folders
                 if (!objectSummary.getKey().endsWith("/")) {
                     fileCount++;
                 }
@@ -300,10 +300,10 @@ public class S3Manager {
     }
 
     /**
-     * 列出文件夹下的所有文件
+     * List all files in folder
      *
-     * @param folderPath 文件夹路径
-     * @return 文件列表
+     * @param folderPath folder path
+     * @return list of file keys
      */
     public List<String> listFiles(String folderPath) {
         if (!folderPath.endsWith("/")) {
@@ -320,7 +320,7 @@ public class S3Manager {
             result = amazonS3.listObjectsV2(request);
             for (S3ObjectSummary objectSummary : result.getObjectSummaries()) {
                 String key = objectSummary.getKey();
-                // 只添加文件，不添加文件夹
+                // Only add files, not folders
                 if (!key.endsWith("/")) {
                     files.add(key);
                 }
@@ -331,4 +331,3 @@ public class S3Manager {
         return files;
     }
 }
-

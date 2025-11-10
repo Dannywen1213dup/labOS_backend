@@ -6,7 +6,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * 帖子数据库操作
+ * Post database operations
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -14,7 +14,7 @@ import java.util.List;
 public interface PostMapper extends BaseMapper<Post> {
 
     /**
-     * 查询帖子列表（包括已被删除的数据）
+     * Query the list of posts (including deleted posts).
      */
     List<Post> listPostWithDelete(Date minUpdateTime);
 

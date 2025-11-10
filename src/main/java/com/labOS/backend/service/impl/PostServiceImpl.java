@@ -47,7 +47,7 @@ import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilde
 import org.springframework.stereotype.Service;
 
 /**
- * 帖子服务实现
+ * Post service implementation
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -76,21 +76,21 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         String title = post.getTitle();
         String content = post.getContent();
         String tags = post.getTags();
-        // 创建时，参数不能为空
+        // When creating, parameters cannot be empty
         if (add) {
             ThrowUtils.throwIf(StringUtils.isAnyBlank(title, content, tags), ErrorCode.PARAMS_ERROR);
         }
-        // 有参数则校验
+        // Validate if parameters exist
         if (StringUtils.isNotBlank(title) && title.length() > 80) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "标题过长");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Title too long");
         }
         if (StringUtils.isNotBlank(content) && content.length() > 8192) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "内容过长");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Content too long");
         }
     }
 
     /**
-     * 获取查询包装类
+     * Get query wrapper
      *
      * @param postQueryRequest
      * @return
@@ -110,7 +110,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         List<String> tagList = postQueryRequest.getTags();
         Long userId = postQueryRequest.getUserId();
         Long notId = postQueryRequest.getNotId();
-        // 拼接查询条件
+        // Build query conditions
         if (StringUtils.isNotBlank(searchText)) {
             queryWrapper.and(qw -> qw.like("title", searchText).or().like("content", searchText));
         }
@@ -139,13 +139,13 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         List<String> tagList = postQueryRequest.getTags();
         List<String> orTagList = postQueryRequest.getOrTags();
         Long userId = postQueryRequest.getUserId();
-        // es 起始页为 0
+        // ES starting page is 0
         long current = postQueryRequest.getCurrent() - 1;
         long pageSize = postQueryRequest.getPageSize();
         String sortField = postQueryRequest.getSortField();
         String sortOrder = postQueryRequest.getSortOrder();
         BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
-        // 过滤
+        // Filter
         boolQueryBuilder.filter(QueryBuilders.termQuery("isDelete", 0));
         if (id != null) {
             boolQueryBuilder.filter(QueryBuilders.termQuery("id", id));
@@ -156,13 +156,13 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         if (userId != null) {
             boolQueryBuilder.filter(QueryBuilders.termQuery("userId", userId));
         }
-        // 必须包含所有标签
+        // Must contain all tags
         if (CollUtil.isNotEmpty(tagList)) {
             for (String tag : tagList) {
                 boolQueryBuilder.filter(QueryBuilders.termQuery("tags", tag));
             }
         }
-        // 包含任何一个标签即可
+        // Contains any tag is sufficient
         if (CollUtil.isNotEmpty(orTagList)) {
             BoolQueryBuilder orTagBoolQueryBuilder = QueryBuilders.boolQuery();
             for (String tag : orTagList) {
@@ -171,39 +171,39 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             orTagBoolQueryBuilder.minimumShouldMatch(1);
             boolQueryBuilder.filter(orTagBoolQueryBuilder);
         }
-        // 按关键词检索
+        // Search by keyword
         if (StringUtils.isNotBlank(searchText)) {
             boolQueryBuilder.should(QueryBuilders.matchQuery("title", searchText));
             boolQueryBuilder.should(QueryBuilders.matchQuery("description", searchText));
             boolQueryBuilder.should(QueryBuilders.matchQuery("content", searchText));
             boolQueryBuilder.minimumShouldMatch(1);
         }
-        // 按标题检索
+        // Search by title
         if (StringUtils.isNotBlank(title)) {
             boolQueryBuilder.should(QueryBuilders.matchQuery("title", title));
             boolQueryBuilder.minimumShouldMatch(1);
         }
-        // 按内容检索
+        // Search by content
         if (StringUtils.isNotBlank(content)) {
             boolQueryBuilder.should(QueryBuilders.matchQuery("content", content));
             boolQueryBuilder.minimumShouldMatch(1);
         }
-        // 排序
+        // Sort
         SortBuilder<?> sortBuilder = SortBuilders.scoreSort();
         if (StringUtils.isNotBlank(sortField)) {
             sortBuilder = SortBuilders.fieldSort(sortField);
             sortBuilder.order(CommonConstant.SORT_ORDER_ASC.equals(sortOrder) ? SortOrder.ASC : SortOrder.DESC);
         }
-        // 分页
+        // Pagination
         PageRequest pageRequest = PageRequest.of((int) current, (int) pageSize);
-        // 构造查询
+        // Build query
         NativeSearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(boolQueryBuilder)
                 .withPageable(pageRequest).withSorts(sortBuilder).build();
         SearchHits<PostEsDTO> searchHits = elasticsearchRestTemplate.search(searchQuery, PostEsDTO.class);
         Page<Post> page = new Page<>();
         page.setTotal(searchHits.getTotalHits());
         List<Post> resourceList = new ArrayList<>();
-        // 查出结果后，从 db 获取最新动态数据（比如点赞数）
+        // After getting results, fetch latest dynamic data from db (e.g., thumb count)
         if (searchHits.hasSearchHits()) {
             List<SearchHit<PostEsDTO>> searchHitList = searchHits.getSearchHits();
             List<Long> postIdList = searchHitList.stream().map(searchHit -> searchHit.getContent().getId())
@@ -215,7 +215,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
                     if (idPostMap.containsKey(postId)) {
                         resourceList.add(idPostMap.get(postId).get(0));
                     } else {
-                        // 从 es 清空 db 已物理删除的数据
+                        // Clear data from ES that has been physically deleted from db
                         String delete = elasticsearchRestTemplate.delete(String.valueOf(postId), PostEsDTO.class);
                         log.info("delete post {}", delete);
                     }
@@ -230,7 +230,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     public PostVO getPostVO(Post post, HttpServletRequest request) {
         PostVO postVO = PostVO.objToVo(post);
         long postId = post.getId();
-        // 1. 关联查询用户信息
+        // 1. Query user information
         Long userId = post.getUserId();
         User user = null;
         if (userId != null && userId > 0) {
@@ -238,16 +238,16 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         }
         UserVO userVO = userService.getUserVO(user);
         postVO.setUser(userVO);
-        // 2. 已登录，获取用户点赞、收藏状态
+        // 2. If logged in, get user thumb and favor status
         User loginUser = userService.getLoginUserPermitNull(request);
         if (loginUser != null) {
-            // 获取点赞
+            // Get thumb
             QueryWrapper<PostThumb> postThumbQueryWrapper = new QueryWrapper<>();
             postThumbQueryWrapper.in("postId", postId);
             postThumbQueryWrapper.eq("userId", loginUser.getId());
             PostThumb postThumb = postThumbMapper.selectOne(postThumbQueryWrapper);
             postVO.setHasThumb(postThumb != null);
-            // 获取收藏
+            // Get favor
             QueryWrapper<PostFavour> postFavourQueryWrapper = new QueryWrapper<>();
             postFavourQueryWrapper.in("postId", postId);
             postFavourQueryWrapper.eq("userId", loginUser.getId());
@@ -264,31 +264,31 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         if (CollUtil.isEmpty(postList)) {
             return postVOPage;
         }
-        // 1. 关联查询用户信息
+        // 1. Query user information
         Set<Long> userIdSet = postList.stream().map(Post::getUserId).collect(Collectors.toSet());
         Map<Long, List<User>> userIdUserListMap = userService.listByIds(userIdSet).stream()
                 .collect(Collectors.groupingBy(User::getId));
-        // 2. 已登录，获取用户点赞、收藏状态
+        // 2. If logged in, get user thumb and favor status
         Map<Long, Boolean> postIdHasThumbMap = new HashMap<>();
         Map<Long, Boolean> postIdHasFavourMap = new HashMap<>();
         User loginUser = userService.getLoginUserPermitNull(request);
         if (loginUser != null) {
             Set<Long> postIdSet = postList.stream().map(Post::getId).collect(Collectors.toSet());
             loginUser = userService.getLoginUser(request);
-            // 获取点赞
+            // Get thumbs
             QueryWrapper<PostThumb> postThumbQueryWrapper = new QueryWrapper<>();
             postThumbQueryWrapper.in("postId", postIdSet);
             postThumbQueryWrapper.eq("userId", loginUser.getId());
             List<PostThumb> postPostThumbList = postThumbMapper.selectList(postThumbQueryWrapper);
             postPostThumbList.forEach(postPostThumb -> postIdHasThumbMap.put(postPostThumb.getPostId(), true));
-            // 获取收藏
+            // Get favors
             QueryWrapper<PostFavour> postFavourQueryWrapper = new QueryWrapper<>();
             postFavourQueryWrapper.in("postId", postIdSet);
             postFavourQueryWrapper.eq("userId", loginUser.getId());
             List<PostFavour> postFavourList = postFavourMapper.selectList(postFavourQueryWrapper);
             postFavourList.forEach(postFavour -> postIdHasFavourMap.put(postFavour.getPostId(), true));
         }
-        // 填充信息
+        // Fill information
         List<PostVO> postVOList = postList.stream().map(post -> {
             PostVO postVO = PostVO.objToVo(post);
             Long userId = post.getUserId();

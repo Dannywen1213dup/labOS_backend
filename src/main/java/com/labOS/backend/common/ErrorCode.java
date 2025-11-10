@@ -1,7 +1,7 @@
 package com.labOS.backend.common;
 
 /**
- * 自定义错误码
+ * customized errorcode
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -9,21 +9,21 @@ package com.labOS.backend.common;
 public enum ErrorCode {
 
     SUCCESS(0, "ok"),
-    PARAMS_ERROR(40000, "请求参数错误"),
-    NOT_LOGIN_ERROR(40100, "未登录"),
-    NO_AUTH_ERROR(40101, "无权限"),
-    NOT_FOUND_ERROR(40400, "请求数据不存在"),
-    FORBIDDEN_ERROR(40300, "禁止访问"),
-    SYSTEM_ERROR(50000, "系统内部异常"),
-    OPERATION_ERROR(50001, "操作失败");
+    PARAMS_ERROR(40000, "request params error"),
+    NOT_LOGIN_ERROR(40100, "user not login"),
+    NO_AUTH_ERROR(40101, "no auth"),
+    NOT_FOUND_ERROR(40400, "requests data not found"),
+    FORBIDDEN_ERROR(40300, "unauthorized request"),
+    SYSTEM_ERROR(50000, "system error"),
+    OPERATION_ERROR(50001, "operation error"),;
 
     /**
-     * 状态码
+     * state code
      */
     private final int code;
 
     /**
-     * 信息
+     * message
      */
     private final String message;
 

@@ -8,47 +8,47 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * 查询${dataName}请求
+ * Query ${dataName} request
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
- * @from <a href="https://www.code-nav.cn">编程导航学习圈</a>
+ *
  */
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class ${upperDataKey}QueryRequest extends PageRequest implements Serializable {
 
     /**
-     * id
+     * Id
      */
     private Long id;
 
     /**
-     * id
+     * Not id
      */
     private Long notId;
 
     /**
-     * 搜索词
+     * Search text
      */
     private String searchText;
 
     /**
-     * 标题
+     * Title
      */
     private String title;
 
     /**
-     * 内容
+     * Content
      */
     private String content;
 
     /**
-     * 标签列表
+     * Tag list
      */
     private List<String> tags;
 
     /**
-     * 创建用户 id
+     * Creator user id
      */
     private Long userId;
 

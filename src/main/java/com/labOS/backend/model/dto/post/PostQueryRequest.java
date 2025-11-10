@@ -7,7 +7,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 查询请求
+ * Query post request
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -17,47 +17,47 @@ import lombok.EqualsAndHashCode;
 public class PostQueryRequest extends PageRequest implements Serializable {
 
     /**
-     * id
+     * Id
      */
     private Long id;
 
     /**
-     * id
+     * Not id
      */
     private Long notId;
 
     /**
-     * 搜索词
+     * Search text
      */
     private String searchText;
 
     /**
-     * 标题
+     * Title
      */
     private String title;
 
     /**
-     * 内容
+     * Content
      */
     private String content;
 
     /**
-     * 标签列表
+     * Tag list
      */
     private List<String> tags;
 
     /**
-     * 至少有一个标签
+     * At least one tag
      */
     private List<String> orTags;
 
     /**
-     * 创建用户 id
+     * Creator user id
      */
     private Long userId;
 
     /**
-     * 收藏用户 id
+     * Favour user id
      */
     private Long favourUserId;
 

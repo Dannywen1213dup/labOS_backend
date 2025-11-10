@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.labOS.backend.model.entity.User;
 
 /**
- * 帖子点赞服务
+ *  thumb up service
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -13,7 +13,7 @@ import com.labOS.backend.model.entity.User;
 public interface PostThumbService extends IService<PostThumb> {
 
     /**
-     * 点赞
+     * thumb up
      *
      * @param postId
      * @param loginUser
@@ -22,7 +22,7 @@ public interface PostThumbService extends IService<PostThumb> {
     int doPostThumb(long postId, User loginUser);
 
     /**
-     * 帖子点赞（内部服务）
+     * thumb up（internal service）
      *
      * @param userId
      * @param postId

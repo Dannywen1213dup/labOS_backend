@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 用户查询请求
+ * User query request
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -15,32 +15,32 @@ import lombok.EqualsAndHashCode;
 @Data
 public class UserQueryRequest extends PageRequest implements Serializable {
     /**
-     * id
+     * Id
      */
     private Long id;
 
     /**
-     * 开放平台id
+     * Open platform id
      */
     private String unionId;
 
     /**
-     * 公众号openId
+     * Official account openId
      */
     private String mpOpenId;
 
     /**
-     * 用户昵称
+     * User nickname
      */
     private String userName;
 
     /**
-     * 简介
+     * Profile
      */
     private String userProfile;
 
     /**
-     * 用户角色：user/admin/ban
+     * User role: user/admin/ban
      */
     private String userRole;
 

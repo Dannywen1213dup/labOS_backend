@@ -1,7 +1,7 @@
 package com.labOS.backend.common;
 
 /**
- * 返回工具类
+ * response util
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -9,7 +9,7 @@ package com.labOS.backend.common;
 public class ResultUtils {
 
     /**
-     * 成功
+     * succeed
      *
      * @param data
      * @param <T>
@@ -20,7 +20,7 @@ public class ResultUtils {
     }
 
     /**
-     * 失败
+     * failed
      *
      * @param errorCode
      * @return
@@ -30,7 +30,7 @@ public class ResultUtils {
     }
 
     /**
-     * 失败
+     * failed
      *
      * @param code
      * @param message
@@ -41,7 +41,7 @@ public class ResultUtils {
     }
 
     /**
-     * 失败
+     * failed
      *
      * @param errorCode
      * @return

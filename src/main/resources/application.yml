@@ -1,54 +1,54 @@
-# 公共配置文件
+# Common configuration file
 # @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
 # @from <a href="https://www.ai4labos.com/">ai4labOS</a>
 spring:
   application:
     name: springboot-init
-  # 默认 dev 环境
+  # Default dev environment
   profiles:
     active: dev
-  # 支持 swagger3
+  # Support swagger3
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
-  # session 配置
+  # Session configuration
   session:
-    # todo 取消注释开启分布式 session（须先配置 Redis）
+    # todo Uncomment to enable distributed session (Redis must be configured first)
     # store-type: redis
-    # 30 天过期
+    # 30 days expiration
     timeout: 2592000
-  # 数据库配置
-  # todo 需替换配置
+  # Database configuration
+  # todo Need to replace configuration
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/my_db
     username: root
     password: 123456
-  # Redis 配置
-  # todo 需替换配置，然后取消注释
+  # Redis configuration
+  # todo Need to replace configuration, then uncomment
 #  redis:
 #    database: 1
 #    host: localhost
 #    port: 6379
 #    timeout: 5000
 #    password: 123456
-  # Elasticsearch 配置
-  # todo 需替换配置，然后取消注释
+  # Elasticsearch configuration
+  # todo Need to replace configuration, then uncomment
 #  elasticsearch:
 #    uris: http://localhost:9200
 #    username: root
 #    password: 123456
-  # 文件上传
+  # File upload
   servlet:
     multipart:
-      # 大小限制
+      # Size limit
       max-file-size: 10MB
 server:
   address: 0.0.0.0
   port: 8101
   servlet:
     context-path: /api
-    # cookie 30 天过期
+    # Cookie 30 days expiration
     session:
       cookie:
         max-age: 2592000
@@ -58,13 +58,13 @@ mybatis-plus:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   global-config:
     db-config:
-      logic-delete-field: isDelete # 全局逻辑删除的实体字段名
-      logic-delete-value: 1 # 逻辑已删除值（默认为 1）
-      logic-not-delete-value: 0 # 逻辑未删除值（默认为 0）
-# 微信相关
+      logic-delete-field: isDelete # Global logical delete entity field name
+      logic-delete-value: 1 # Logical deleted value (default is 1)
+      logic-not-delete-value: 0 # Logical not deleted value (default is 0)
+# WeChat related
 wx:
-  # 微信公众平台
-  # todo 需替换配置
+  # WeChat Official Account Platform
+  # todo Need to replace configuration
   mp:
     token: xxx
     aesKey: xxx
@@ -77,23 +77,23 @@ wx:
         host: 127.0.0.1
         port: 6379
       type: Memory
-  # 微信开放平台
-  # todo 需替换配置
+  # WeChat Open Platform
+  # todo Need to replace configuration
   open:
     appId: xxx
     appSecret: xxx
-# AWS S3 对象存储
+# AWS S3 object storage
 aws:
   s3:
     accessKey: xxx
     secretKey: xxx
     region: xxx
     bucket: xxx
-# 接口文档配置
+# API documentation configuration
 knife4j:
   enable: true
   openapi:
-    title: "接口文档"
+    title: "API Documentation"
     version: 1.0
     group:
       default:

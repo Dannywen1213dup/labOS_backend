@@ -7,7 +7,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
 /**
- * Spring 上下文获取工具
+ * Spring context utility
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -23,7 +23,7 @@ public class SpringContextUtils implements ApplicationContextAware {
     }
 
     /**
-     * 通过名称获取 Bean
+     * Get Bean by name
      *
      * @param beanName
      * @return
@@ -33,7 +33,7 @@ public class SpringContextUtils implements ApplicationContextAware {
     }
 
     /**
-     * 通过 class 获取 Bean
+     * Get Bean by class
      *
      * @param beanClass
      * @param <T>
@@ -44,7 +44,7 @@ public class SpringContextUtils implements ApplicationContextAware {
     }
 
     /**
-     * 通过名称和类型获取 Bean
+     * Get Bean by name and type
      *
      * @param beanName
      * @param beanClass

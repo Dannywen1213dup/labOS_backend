@@ -3,7 +3,7 @@ package com.labOS.backend.exception;
 import com.labOS.backend.common.ErrorCode;
 
 /**
- * 自定义异常类
+ * Custom exception class
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -11,7 +11,7 @@ import com.labOS.backend.common.ErrorCode;
 public class BusinessException extends RuntimeException {
 
     /**
-     * 错误码
+     * error code
      */
     private final int code;
 

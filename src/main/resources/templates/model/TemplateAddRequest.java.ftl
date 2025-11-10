@@ -6,26 +6,26 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * 创建${dataName}请求
+ * Create ${dataName} request
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
- * @from <a href="https://www.code-nav.cn">编程导航学习圈</a>
+ *
  */
 @Data
 public class ${upperDataKey}AddRequest implements Serializable {
 
     /**
-     * 标题
+     * Title
      */
     private String title;
 
     /**
-     * 内容
+     * Content
      */
     private String content;
 
     /**
-     * 标签列表
+     * Tag list
      */
     private List<String> tags;
 

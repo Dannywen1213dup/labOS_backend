@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 
 /**
- * 帖子 ES 操作
+ * Posts elastic search manipulation
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>

@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * 文件接口
+ * file management interface
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -41,7 +41,7 @@ public class FileController {
     private S3Manager s3Manager;
 
     /**
-     * 文件上传
+     * file upload
      *
      * @param multipartFile
      * @param uploadFileRequest
@@ -58,24 +58,24 @@ public class FileController {
         }
         validFile(multipartFile, fileUploadBizEnum);
         User loginUser = userService.getLoginUser(request);
-        // 文件目录：根据业务、用户来划分
+        // File directory: structured based on business and user.
         String uuid = RandomStringUtils.randomAlphanumeric(8);
         String filename = uuid + "-" + multipartFile.getOriginalFilename();
         String filepath = String.format("/%s/%s/%s", fileUploadBizEnum.getValue(), loginUser.getId(), filename);
         File file = null;
         try {
-            // 上传文件
+            // uploading file
             file = File.createTempFile(filepath, null);
             multipartFile.transferTo(file);
             s3Manager.putObject(filepath, file);
-            // 返回可访问地址
+            // return file url
             return ResultUtils.success(FileConstant.S3_HOST + filepath);
         } catch (Exception e) {
             log.error("file upload error, filepath = " + filepath, e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "上传失败");
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "file upload error, filepath = " + filepath);
         } finally {
             if (file != null) {
-                // 删除临时文件
+                // delete temp resources
                 boolean delete = file.delete();
                 if (!delete) {
                     log.error("file delete error, filepath = {}", filepath);
@@ -85,23 +85,23 @@ public class FileController {
     }
 
     /**
-     * 校验文件
+     * checking files
      *
      * @param multipartFile
-     * @param fileUploadBizEnum 业务类型
+     * @param fileUploadBizEnum according to your business service type
      */
     private void validFile(MultipartFile multipartFile, FileUploadBizEnum fileUploadBizEnum) {
-        // 文件大小
+        // file size
         long fileSize = multipartFile.getSize();
-        // 文件后缀
+        // file extension checking
         String fileSuffix = FileUtil.getSuffix(multipartFile.getOriginalFilename());
         final long ONE_M = 1024 * 1024L;
         if (FileUploadBizEnum.USER_AVATAR.equals(fileUploadBizEnum)) {
             if (fileSize > ONE_M) {
-                throw new BusinessException(ErrorCode.PARAMS_ERROR, "文件大小不能超过 1M");
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "file size can not exceed 1M");
             }
             if (!Arrays.asList("jpeg", "jpg", "svg", "png", "webp").contains(fileSuffix)) {
-                throw new BusinessException(ErrorCode.PARAMS_ERROR, "文件类型错误");
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "file type error");
             }
         }
     }

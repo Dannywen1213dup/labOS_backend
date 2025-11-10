@@ -12,12 +12,12 @@ import cn.hutool.core.collection.CollUtil;
 import org.springframework.boot.CommandLineRunner;
 
 /**
- * 全量同步帖子到 es
+ * Full sync posts to ES
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
  */
-// todo 取消注释开启任务
+// todo Uncomment to enable task
 //@Component
 @Slf4j
 public class FullSyncPostToEs implements CommandLineRunner {

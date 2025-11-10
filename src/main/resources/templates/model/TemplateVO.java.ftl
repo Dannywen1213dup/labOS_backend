@@ -10,56 +10,56 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * ${dataName}视图
+ * ${dataName} view object
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
- * @from <a href="https://www.code-nav.cn">编程导航学习圈</a>
+ *
  */
 @Data
 public class ${upperDataKey}VO implements Serializable {
 
     /**
-     * id
+     * Id
      */
     private Long id;
 
     /**
-     * 标题
+     * Title
      */
     private String title;
 
     /**
-     * 内容
+     * Content
      */
     private String content;
 
     /**
-     * 创建用户 id
+     * Creator user id
      */
     private Long userId;
 
     /**
-     * 创建时间
+     * Create time
      */
     private Date createTime;
 
     /**
-     * 更新时间
+     * Update time
      */
     private Date updateTime;
 
     /**
-     * 标签列表
+     * Tag list
      */
     private List<String> tagList;
 
     /**
-     * 创建用户信息
+     * Creator user information
      */
     private UserVO user;
 
     /**
-     * 封装类转对象
+     * Convert VO to entity
      *
      * @param ${dataKey}VO
      * @return
@@ -76,7 +76,7 @@ public class ${upperDataKey}VO implements Serializable {
     }
 
     /**
-     * 对象转封装类
+     * Convert entity to VO
      *
      * @param ${dataKey}
      * @return

@@ -17,7 +17,7 @@ import javax.servlet.http.HttpServletRequest;
 public interface PostService extends IService<Post> {
 
     /**
-     * 校验
+     * verification
      *
      * @param post
      * @param add
@@ -25,7 +25,7 @@ public interface PostService extends IService<Post> {
     void validPost(Post post, boolean add);
 
     /**
-     * 获取查询条件
+     * Get query conditions
      *
      * @param postQueryRequest
      * @return
@@ -33,7 +33,7 @@ public interface PostService extends IService<Post> {
     QueryWrapper<Post> getQueryWrapper(PostQueryRequest postQueryRequest);
 
     /**
-     * 从 ES 查询
+     * Query from ES
      *
      * @param postQueryRequest
      * @return
@@ -41,8 +41,7 @@ public interface PostService extends IService<Post> {
     Page<Post> searchFromEs(PostQueryRequest postQueryRequest);
 
     /**
-     * 获取帖子封装
-     *
+     * Get Post Encapsulation
      * @param post
      * @param request
      * @return
@@ -50,7 +49,7 @@ public interface PostService extends IService<Post> {
     PostVO getPostVO(Post post, HttpServletRequest request);
 
     /**
-     * 分页获取帖子封装
+     * Paginated post retrieval encapsulation
      *
      * @param postPage
      * @param request

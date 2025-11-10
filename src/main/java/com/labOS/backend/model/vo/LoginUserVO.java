@@ -5,7 +5,7 @@ import java.util.Date;
 import lombok.Data;
 
 /**
- * 已登录用户视图（脱敏）
+ * Logged-in user view object (desensitized)
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -14,37 +14,37 @@ import lombok.Data;
 public class LoginUserVO implements Serializable {
 
     /**
-     * 用户 id
+     * User id
      */
     private Long id;
 
     /**
-     * 用户昵称
+     * User nickname
      */
     private String userName;
 
     /**
-     * 用户头像
+     * User avatar
      */
     private String userAvatar;
 
     /**
-     * 用户简介
+     * User profile
      */
     private String userProfile;
 
     /**
-     * 用户角色：user/admin/ban
+     * User role: user/admin/ban
      */
     private String userRole;
 
     /**
-     * 创建时间
+     * Create time
      */
     private Date createTime;
 
     /**
-     * 更新时间
+     * Update time
      */
     private Date updateTime;
 

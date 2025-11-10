@@ -5,7 +5,7 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * 上传进度视图
+ * Upload progress view object
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -14,17 +14,17 @@ import java.io.Serializable;
 public class UploadProgressVO implements Serializable {
 
     /**
-     * 文件夹路径
+     * Folder path
      */
     private String folderPath;
 
     /**
-     * 已上传的文件数量
+     * Uploaded file count
      */
     private Integer fileCount;
 
     /**
-     * 文件列表
+     * File list
      */
     private java.util.List<String> files;
 

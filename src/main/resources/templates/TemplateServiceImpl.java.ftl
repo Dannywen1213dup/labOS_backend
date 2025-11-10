@@ -32,10 +32,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * ${dataName}服务实现
+ * ${dataName} service implementation
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
- * @from <a href="https://www.code-nav.cn">编程导航学习圈</a>
  */
 @Service
 @Slf4j
@@ -45,30 +44,30 @@ public class ${upperDataKey}ServiceImpl extends ServiceImpl<${upperDataKey}Mappe
     private UserService userService;
 
     /**
-     * 校验数据
+     * Validate data
      *
      * @param ${dataKey}
-     * @param add      对创建的数据进行校验
+     * @param add      Validate data for creation
      */
     @Override
     public void valid${upperDataKey}(${upperDataKey} ${dataKey}, boolean add) {
         ThrowUtils.throwIf(${dataKey} == null, ErrorCode.PARAMS_ERROR);
-        // todo 从对象中取值
+        // todo Get values from object
         String title = ${dataKey}.getTitle();
-        // 创建数据时，参数不能为空
+        // When creating data, parameters cannot be empty
         if (add) {
-            // todo 补充校验规则
+            // todo Add validation rules
             ThrowUtils.throwIf(StringUtils.isBlank(title), ErrorCode.PARAMS_ERROR);
         }
-        // 修改数据时，有参数则校验
-        // todo 补充校验规则
+        // When updating data, validate if parameters exist
+        // todo Add validation rules
         if (StringUtils.isNotBlank(title)) {
-            ThrowUtils.throwIf(title.length() > 80, ErrorCode.PARAMS_ERROR, "标题过长");
+            ThrowUtils.throwIf(title.length() > 80, ErrorCode.PARAMS_ERROR, "Title too long");
         }
     }
 
     /**
-     * 获取查询条件
+     * Get query wrapper
      *
      * @param ${dataKey}QueryRequest
      * @return
@@ -79,7 +78,7 @@ public class ${upperDataKey}ServiceImpl extends ServiceImpl<${upperDataKey}Mappe
         if (${dataKey}QueryRequest == null) {
             return queryWrapper;
         }
-        // todo 从对象中取值
+        // todo Get values from object
         Long id = ${dataKey}QueryRequest.getId();
         Long notId = ${dataKey}QueryRequest.getNotId();
         String title = ${dataKey}QueryRequest.getTitle();
@@ -89,26 +88,26 @@ public class ${upperDataKey}ServiceImpl extends ServiceImpl<${upperDataKey}Mappe
         String sortOrder = ${dataKey}QueryRequest.getSortOrder();
         List<String> tagList = ${dataKey}QueryRequest.getTags();
         Long userId = ${dataKey}QueryRequest.getUserId();
-        // todo 补充需要的查询条件
-        // 从多字段中搜索
+        // todo Add required query conditions
+        // Search from multiple fields
         if (StringUtils.isNotBlank(searchText)) {
-            // 需要拼接查询条件
+            // Need to concatenate query conditions
             queryWrapper.and(qw -> qw.like("title", searchText).or().like("content", searchText));
         }
-        // 模糊查询
+        // Fuzzy query
         queryWrapper.like(StringUtils.isNotBlank(title), "title", title);
         queryWrapper.like(StringUtils.isNotBlank(content), "content", content);
-        // JSON 数组查询
+        // JSON array query
         if (CollUtil.isNotEmpty(tagList)) {
             for (String tag : tagList) {
                 queryWrapper.like("tags", "\"" + tag + "\"");
             }
         }
-        // 精确查询
+        // Exact query
         queryWrapper.ne(ObjectUtils.isNotEmpty(notId), "id", notId);
         queryWrapper.eq(ObjectUtils.isNotEmpty(id), "id", id);
         queryWrapper.eq(ObjectUtils.isNotEmpty(userId), "userId", userId);
-        // 排序规则
+        // Sort rule
         queryWrapper.orderBy(SqlUtils.validSortField(sortField),
                 sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
                 sortField);
@@ -116,7 +115,7 @@ public class ${upperDataKey}ServiceImpl extends ServiceImpl<${upperDataKey}Mappe
     }
 
     /**
-     * 获取${dataName}封装
+     * Get ${dataName} VO
      *
      * @param ${dataKey}
      * @param request
@@ -124,12 +123,12 @@ public class ${upperDataKey}ServiceImpl extends ServiceImpl<${upperDataKey}Mappe
      */
     @Override
     public ${upperDataKey}VO get${upperDataKey}VO(${upperDataKey} ${dataKey}, HttpServletRequest request) {
-        // 对象转封装类
+        // Convert entity to VO
         ${upperDataKey}VO ${dataKey}VO = ${upperDataKey}VO.objToVo(${dataKey});
 
-        // todo 可以根据需要为封装对象补充值，不需要的内容可以删除
-        // region 可选
-        // 1. 关联查询用户信息
+        // todo Can supplement values for VO object as needed, delete unnecessary content
+        // region Optional
+        // 1. Query user information
         Long userId = ${dataKey}.getUserId();
         User user = null;
         if (userId != null && userId > 0) {
@@ -137,17 +136,17 @@ public class ${upperDataKey}ServiceImpl extends ServiceImpl<${upperDataKey}Mappe
         }
         UserVO userVO = userService.getUserVO(user);
         ${dataKey}VO.setUser(userVO);
-        // 2. 已登录，获取用户点赞、收藏状态
+        // 2. If logged in, get user thumb and favor status
         long ${dataKey}Id = ${dataKey}.getId();
         User loginUser = userService.getLoginUserPermitNull(request);
         if (loginUser != null) {
-            // 获取点赞
+            // Get thumb
             QueryWrapper<${upperDataKey}Thumb> ${dataKey}ThumbQueryWrapper = new QueryWrapper<>();
             ${dataKey}ThumbQueryWrapper.in("${dataKey}Id", ${dataKey}Id);
             ${dataKey}ThumbQueryWrapper.eq("userId", loginUser.getId());
             ${upperDataKey}Thumb ${dataKey}Thumb = ${dataKey}ThumbMapper.selectOne(${dataKey}ThumbQueryWrapper);
             ${dataKey}VO.setHasThumb(${dataKey}Thumb != null);
-            // 获取收藏
+            // Get favor
             QueryWrapper<${upperDataKey}Favour> ${dataKey}FavourQueryWrapper = new QueryWrapper<>();
             ${dataKey}FavourQueryWrapper.in("${dataKey}Id", ${dataKey}Id);
             ${dataKey}FavourQueryWrapper.eq("userId", loginUser.getId());
@@ -160,7 +159,7 @@ public class ${upperDataKey}ServiceImpl extends ServiceImpl<${upperDataKey}Mappe
     }
 
     /**
-     * 分页获取${dataName}封装
+     * Get ${dataName} VO page
      *
      * @param ${dataKey}Page
      * @param request
@@ -173,38 +172,38 @@ public class ${upperDataKey}ServiceImpl extends ServiceImpl<${upperDataKey}Mappe
         if (CollUtil.isEmpty(${dataKey}List)) {
             return ${dataKey}VOPage;
         }
-        // 对象列表 => 封装对象列表
+        // Entity list => VO list
         List<${upperDataKey}VO> ${dataKey}VOList = ${dataKey}List.stream().map(${dataKey} -> {
             return ${upperDataKey}VO.objToVo(${dataKey});
         }).collect(Collectors.toList());
 
-        // todo 可以根据需要为封装对象补充值，不需要的内容可以删除
-        // region 可选
-        // 1. 关联查询用户信息
+        // todo Can supplement values for VO object as needed, delete unnecessary content
+        // region Optional
+        // 1. Query user information
         Set<Long> userIdSet = ${dataKey}List.stream().map(${upperDataKey}::getUserId).collect(Collectors.toSet());
         Map<Long, List<User>> userIdUserListMap = userService.listByIds(userIdSet).stream()
                 .collect(Collectors.groupingBy(User::getId));
-        // 2. 已登录，获取用户点赞、收藏状态
+        // 2. If logged in, get user thumb and favor status
         Map<Long, Boolean> ${dataKey}IdHasThumbMap = new HashMap<>();
         Map<Long, Boolean> ${dataKey}IdHasFavourMap = new HashMap<>();
         User loginUser = userService.getLoginUserPermitNull(request);
         if (loginUser != null) {
             Set<Long> ${dataKey}IdSet = ${dataKey}List.stream().map(${upperDataKey}::getId).collect(Collectors.toSet());
             loginUser = userService.getLoginUser(request);
-            // 获取点赞
+            // Get thumbs
             QueryWrapper<${upperDataKey}Thumb> ${dataKey}ThumbQueryWrapper = new QueryWrapper<>();
             ${dataKey}ThumbQueryWrapper.in("${dataKey}Id", ${dataKey}IdSet);
             ${dataKey}ThumbQueryWrapper.eq("userId", loginUser.getId());
             List<${upperDataKey}Thumb> ${dataKey}${upperDataKey}ThumbList = ${dataKey}ThumbMapper.selectList(${dataKey}ThumbQueryWrapper);
             ${dataKey}${upperDataKey}ThumbList.forEach(${dataKey}${upperDataKey}Thumb -> ${dataKey}IdHasThumbMap.put(${dataKey}${upperDataKey}Thumb.get${upperDataKey}Id(), true));
-            // 获取收藏
+            // Get favors
             QueryWrapper<${upperDataKey}Favour> ${dataKey}FavourQueryWrapper = new QueryWrapper<>();
             ${dataKey}FavourQueryWrapper.in("${dataKey}Id", ${dataKey}IdSet);
             ${dataKey}FavourQueryWrapper.eq("userId", loginUser.getId());
             List<${upperDataKey}Favour> ${dataKey}FavourList = ${dataKey}FavourMapper.selectList(${dataKey}FavourQueryWrapper);
             ${dataKey}FavourList.forEach(${dataKey}Favour -> ${dataKey}IdHasFavourMap.put(${dataKey}Favour.get${upperDataKey}Id(), true));
         }
-        // 填充信息
+        // Fill information
         ${dataKey}VOList.forEach(${dataKey}VO -> {
             Long userId = ${dataKey}VO.getUserId();
             User user = null;

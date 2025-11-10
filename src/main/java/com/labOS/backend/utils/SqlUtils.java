@@ -3,7 +3,7 @@ package com.labOS.backend.utils;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * SQL 工具
+ * SQL utility
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -11,7 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 public class SqlUtils {
 
     /**
-     * 校验排序字段是否合法（防止 SQL 注入）
+     * Validate if sort field is legal (prevent SQL injection)
      *
      * @param sortField
      * @return

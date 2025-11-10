@@ -4,7 +4,7 @@ import com.labOS.backend.constant.CommonConstant;
 import lombok.Data;
 
 /**
- * 分页请求
+ * paging requests
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -13,22 +13,22 @@ import lombok.Data;
 public class PageRequest {
 
     /**
-     * 当前页号
+     * current page number
      */
     private int current = 1;
 
     /**
-     * 页面大小
+     * page size
      */
     private int pageSize = 10;
 
     /**
-     * 排序字段
+     * sort field
      */
     private String sortField;
 
     /**
-     * 排序顺序（默认升序）
+     * order (ascending/descending)
      */
     private String sortOrder = CommonConstant.SORT_ORDER_ASC;
 }

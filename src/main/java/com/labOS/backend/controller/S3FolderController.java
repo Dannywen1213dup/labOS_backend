@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * S3 文件夹管理接口
+ * S3 Folder Management Interface
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -39,32 +39,32 @@ public class S3FolderController {
     private S3Manager s3Manager;
 
     /**
-     * 创建或获取上传文件夹
-     * 文件夹结构: labOS/{uuid}/{MMDDYYYY}/{count}/
-     * 如果不存在 uuid 文件夹，会自动创建
-     * 如果不存在今天的日期文件夹，会自动创建
-     * 自动创建新的次数文件夹
+     * Create or retrieve the upload folder
+     * Folder structure: labOS/{uuid}/{MMDDYYYY}/{count}/
+     * If the uuid folder does not exist, it will be created automatically.
+     * If today's date folder does not exist, it will be created automatically.
+     * Automatically create a new count folder.
      *
-     * @param createFolderRequest 包含 uuid
-     * @return 文件夹信息
+     * @param createFolderRequest include uuid
+     * @return Folder information
      */
     @PostMapping("/create")
     public BaseResponse<FolderInfoVO> createFolder(@RequestBody CreateFolderRequest createFolderRequest) {
         if (createFolderRequest == null || StringUtils.isBlank(createFolderRequest.getUuid())) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "UUID 不能为空");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "UUID cannot be empty");
         }
 
         String uuid = createFolderRequest.getUuid();
         
         try {
-            // 创建文件夹并获取路径
+            // Create folder and get path
             String folderPath = s3Manager.getOrCreateUploadFolder(uuid);
             
-            // 解析路径信息
+            // Parse path information
             FolderInfoVO folderInfoVO = new FolderInfoVO();
             folderInfoVO.setFolderPath(folderPath);
             
-            // 解析路径: labOS/{uuid}/{MMDDYYYY}/{count}/
+            // Parse path: labOS/{uuid}/{MMDDYYYY}/{count}/
             String[] parts = folderPath.split("/");
             if (parts.length >= 4) {
                 folderInfoVO.setUuid(parts[1]);
@@ -76,33 +76,33 @@ public class S3FolderController {
             return ResultUtils.success(folderInfoVO);
         } catch (Exception e) {
             log.error("Failed to create folder for uuid: {}", uuid, e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "创建文件夹失败");
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "Failed to create folder");
         }
     }
 
     /**
-     * 删除文件夹及其所有内容
+     * Delete the folder and all its contents.
      *
-     * @param deleteFolderRequest 包含文件夹路径
-     * @return 是否删除成功
+     * @param deleteFolderRequest Contains folder path
+     * @return is successfully deleted
      */
     @PostMapping("/delete")
     public BaseResponse<Boolean> deleteFolder(@RequestBody DeleteFolderRequest deleteFolderRequest) {
         if (deleteFolderRequest == null || StringUtils.isBlank(deleteFolderRequest.getFolderPath())) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "文件夹路径不能为空");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "The folder path cannot be empty");
         }
 
         String folderPath = deleteFolderRequest.getFolderPath();
         
-        // 验证路径格式
+        // Verify path format
         if (!isValidFolderPath(folderPath)) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "文件夹路径格式错误，正确格式: labOS/{uuid}/{MMDDYYYY}/{count}");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "The folder path format is incorrect. The correct format is:: labOS/{uuid}/{MMDDYYYY}/{count}");
         }
 
         try {
-            // 检查文件夹是否存在
+            // Check if the folder exists
             if (!s3Manager.doesFolderExist(folderPath)) {
-                throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "文件夹不存在");
+                throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "Folder does not exist");
             }
             
             s3Manager.deleteFolder(folderPath);
@@ -112,47 +112,47 @@ public class S3FolderController {
             throw e;
         } catch (Exception e) {
             log.error("Failed to delete folder: {}", folderPath, e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "删除文件夹失败");
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "Failed to delete folder");
         }
     }
 
     /**
-     * 获取文件夹下载链接（ZIP 格式）
-     * 返回一个临时 URL，浏览器可以直接访问下载
+     *  Get the folder download link (ZIP format）
+     *  Returns a temporary URL that your browser can directly access to download.
      *
-     * @param downloadFolderRequest 包含文件夹路径
-     * @return 下载 URL
+     * @param downloadFolderRequest Contains folder path
+     * @return downloads URL
      */
     @PostMapping("/download")
     public BaseResponse<String> downloadFolder(@RequestBody DownloadFolderRequest downloadFolderRequest) {
         if (downloadFolderRequest == null || StringUtils.isBlank(downloadFolderRequest.getFolderPath())) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "文件夹路径不能为空");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "The folder path cannot be empty.");
         }
 
         String folderPath = downloadFolderRequest.getFolderPath();
         
-        // 验证路径格式
+        // Verify path format
         if (!isValidFolderPath(folderPath)) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "文件夹路径格式错误，正确格式: labOS/{uuid}/{MMDDYYYY}/{count}");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "The folder path format is incorrect. The correct format is: labOS/{uuid}/{MMDDYYYY}/{count}");
         }
 
         File zipFile = null;
         try {
-            // 检查文件夹是否存在
+            // Check if folder exists
             if (!s3Manager.doesFolderExist(folderPath)) {
-                throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "文件夹不存在");
+                throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "Folder does not exist");
             }
 
-            // 下载文件夹并打包成 ZIP
+            // Download folder and package as ZIP
             zipFile = s3Manager.downloadFolderAsZip(folderPath);
             
-            // 生成 ZIP 文件名
+            // Generate ZIP file name
             String zipFileName = folderPath.replace("/", "_") + ".zip";
             
-            // 上传 ZIP 文件到 S3
+            // Upload ZIP file to S3
             s3Manager.putObject("downloads/" + zipFileName, zipFile);
             
-            // 生成预签名 URL（1小时有效期）
+            // Generate presigned URL (1 hour expiration)
             String presignedUrl = s3Manager.generatePresignedUrl("downloads/" + zipFileName, FileConstant.PRESIGNED_URL_EXPIRATION);
             
             log.info("Generated download URL for folder: {}", folderPath);
@@ -161,9 +161,9 @@ public class S3FolderController {
             throw e;
         } catch (Exception e) {
             log.error("Failed to generate download URL for folder: {}", folderPath, e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "生成下载链接失败");
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "Failed to generate download URL");
         } finally {
-            // 清理临时文件
+            // Clean up temporary files
             if (zipFile != null && zipFile.exists()) {
                 boolean deleted = zipFile.delete();
                 if (!deleted) {
@@ -174,38 +174,38 @@ public class S3FolderController {
     }
 
     /**
-     * 查询上传进度
-     * 返回文件夹中已上传的文件数量和文件列表
+     * Query upload progress
+     * Returns the number of uploaded files and file list in the folder
      *
-     * @param uploadProgressRequest 包含文件夹路径
-     * @return 上传进度信息
+     * @param uploadProgressRequest Contains folder path
+     * @return Upload progress information
      */
     @PostMapping("/progress")
     public BaseResponse<UploadProgressVO> getUploadProgress(@RequestBody UploadProgressRequest uploadProgressRequest) {
         if (uploadProgressRequest == null || StringUtils.isBlank(uploadProgressRequest.getFolderPath())) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "文件夹路径不能为空");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Folder path cannot be empty");
         }
 
         String folderPath = uploadProgressRequest.getFolderPath();
         
-        // 验证路径格式
+        // Verify path format
         if (!isValidFolderPath(folderPath)) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "文件夹路径格式错误，正确格式: labOS/{uuid}/{MMDDYYYY}/{count}");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Folder path format is incorrect. Correct format: labOS/{uuid}/{MMDDYYYY}/{count}");
         }
 
         try {
-            // 检查文件夹是否存在
+            // Check if folder exists
             if (!s3Manager.doesFolderExist(folderPath)) {
-                throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "文件夹不存在");
+                throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "Folder does not exist");
             }
 
-            // 获取文件数量
+            // Get file count
             int fileCount = s3Manager.getUploadProgress(folderPath);
             
-            // 获取文件列表
+            // Get file list
             List<String> files = s3Manager.listFiles(folderPath);
             
-            // 构建返回对象
+            // Build return object
             UploadProgressVO progressVO = new UploadProgressVO();
             progressVO.setFolderPath(folderPath);
             progressVO.setFileCount(fileCount);
@@ -217,19 +217,19 @@ public class S3FolderController {
             throw e;
         } catch (Exception e) {
             log.error("Failed to get upload progress for folder: {}", folderPath, e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "获取上传进度失败");
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "Failed to get upload progress");
         }
     }
 
     /**
-     * 批量上传文件到指定文件夹
-     * 如果不提供 folderPath，会自动创建新的文件夹
-     * 如果提供 folderPath，会上传到指定文件夹
+     * Batch upload files to specified folder
+     * If folderPath is not provided, a new folder will be created automatically
+     * If folderPath is provided, files will be uploaded to the specified folder
      *
-     * @param files 文件数组
-     * @param uuid 用户 UUID（必须）
-     * @param folderPath 文件夹路径（可选）
-     * @return 上传结果
+     * @param files File array
+     * @param uuid User UUID (required)
+     * @param folderPath Folder path (optional)
+     * @return Upload result
      */
     @PostMapping("/batch-upload")
     public BaseResponse<BatchUploadResultVO> batchUpload(
@@ -238,11 +238,11 @@ public class S3FolderController {
             @RequestParam(value = "folderPath", required = false) String folderPath) {
         
         if (StringUtils.isBlank(uuid)) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "UUID 不能为空");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "UUID cannot be empty");
         }
 
         if (files == null || files.length == 0) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请至少上传一个文件");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Please upload at least one file");
         }
 
         BatchUploadResultVO result = new BatchUploadResultVO();
@@ -252,57 +252,57 @@ public class S3FolderController {
         int failCount = 0;
 
         try {
-            // 如果没有提供 folderPath，自动创建新的文件夹
+            // If folderPath is not provided, automatically create a new folder
             String targetFolderPath;
             if (StringUtils.isBlank(folderPath)) {
                 targetFolderPath = s3Manager.getOrCreateUploadFolder(uuid);
                 log.info("Created new folder for batch upload: {}", targetFolderPath);
             } else {
-                // 验证提供的文件夹路径格式
+                // Verify provided folder path format
                 if (!isValidFolderPath(folderPath)) {
-                    throw new BusinessException(ErrorCode.PARAMS_ERROR, "文件夹路径格式错误，正确格式: labOS/{uuid}/{MMDDYYYY}/{count}");
+                    throw new BusinessException(ErrorCode.PARAMS_ERROR, "Folder path format is incorrect. Correct format: labOS/{uuid}/{MMDDYYYY}/{count}");
                 }
                 
-                // 确保文件夹以 / 结尾
+                // Ensure folder ends with /
                 targetFolderPath = folderPath.endsWith("/") ? folderPath : folderPath + "/";
                 
-                // 检查文件夹是否存在，不存在则创建
+                // Check if folder exists, create if not
                 if (!s3Manager.doesFolderExist(targetFolderPath)) {
                     s3Manager.createFolder(targetFolderPath);
                     log.info("Created folder for batch upload: {}", targetFolderPath);
                 }
             }
 
-            // 上传每个文件
+            // Upload each file
             for (MultipartFile file : files) {
                 if (file.isEmpty()) {
-                    failedFiles.add(file.getOriginalFilename() + " (文件为空)");
+                    failedFiles.add(file.getOriginalFilename() + " (File is empty)");
                     failCount++;
                     continue;
                 }
 
                 File tempFile = null;
                 try {
-                    // 构建文件路径
+                    // Build file path
                     String fileName = file.getOriginalFilename();
                     String fileKey = targetFolderPath + fileName;
 
-                    // 创建临时文件
+                    // Create temporary file
                     tempFile = File.createTempFile("upload-", "-" + fileName);
                     file.transferTo(tempFile);
 
-                    // 上传到 S3
+                    // Upload to S3
                     s3Manager.putObject(fileKey, tempFile);
                     
                     successFiles.add(fileKey);
                     successCount++;
                     log.info("Successfully uploaded file: {}", fileKey);
                 } catch (Exception e) {
-                    failedFiles.add(file.getOriginalFilename() + " (上传失败: " + e.getMessage() + ")");
+                    failedFiles.add(file.getOriginalFilename() + " (Upload failed: " + e.getMessage() + ")");
                     failCount++;
                     log.error("Failed to upload file: {}", file.getOriginalFilename(), e);
                 } finally {
-                    // 清理临时文件
+                    // Clean up temporary files
                     if (tempFile != null && tempFile.exists()) {
                         boolean deleted = tempFile.delete();
                         if (!deleted) {
@@ -312,14 +312,14 @@ public class S3FolderController {
                 }
             }
 
-            // 构建返回结果
+            // Build return result
             result.setFolderPath(targetFolderPath);
             result.setSuccessCount(successCount);
             result.setFailCount(failCount);
             result.setSuccessFiles(successFiles);
             result.setFailedFiles(failedFiles);
 
-            // 解析文件夹信息
+            // Parse folder information
             FolderInfoVO folderInfo = new FolderInfoVO();
             folderInfo.setFolderPath(targetFolderPath);
             String[] parts = targetFolderPath.split("/");
@@ -336,23 +336,23 @@ public class S3FolderController {
             throw e;
         } catch (Exception e) {
             log.error("Batch upload failed", e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "批量上传失败");
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "Batch upload failed");
         }
     }
 
     /**
-     * 验证文件夹路径格式
-     * 正确格式: labOS/{uuid}/{MMDDYYYY}/{count}
+     * Validate folder path format
+     * Correct format: labOS/{uuid}/{MMDDYYYY}/{count}
      *
-     * @param folderPath 文件夹路径
-     * @return 是否有效
+     * @param folderPath Folder path
+     * @return Whether it is valid
      */
     private boolean isValidFolderPath(String folderPath) {
         if (StringUtils.isBlank(folderPath)) {
             return false;
         }
         
-        // 移除首尾的斜杠
+        // Remove leading and trailing slashes
         String path = folderPath.trim();
         if (path.startsWith("/")) {
             path = path.substring(1);
@@ -361,25 +361,25 @@ public class S3FolderController {
             path = path.substring(0, path.length() - 1);
         }
         
-        // 分割路径
+        // Split path
         String[] parts = path.split("/");
         
-        // 检查是否有 4 个部分: labOS, uuid, date, count
+        // Check if there are 4 parts: labOS, uuid, date, count
         if (parts.length != 4) {
             return false;
         }
         
-        // 检查第一部分是否为 labOS
+        // Check if first part is labOS
         if (!"labOS".equals(parts[0])) {
             return false;
         }
         
-        // 检查日期格式 (MMDDYYYY - 8位数字)
+        // Check date format (MMDDYYYY - 8 digits)
         if (!parts[2].matches("\\d{8}")) {
             return false;
         }
         
-        // 检查次数是否为数字
+        // Check if count is a number
         if (!parts[3].matches("\\d+")) {
             return false;
         }

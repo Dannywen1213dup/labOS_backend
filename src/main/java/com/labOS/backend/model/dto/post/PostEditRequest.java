@@ -5,7 +5,7 @@ import java.util.List;
 import lombok.Data;
 
 /**
- * 编辑请求
+ * Edit post request
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -14,22 +14,22 @@ import lombok.Data;
 public class PostEditRequest implements Serializable {
 
     /**
-     * id
+     * Id
      */
     private Long id;
 
     /**
-     * 标题
+     * Title
      */
     private String title;
 
     /**
-     * 内容
+     * Content
      */
     private String content;
 
     /**
-     * 标签列表
+     * Tag list
      */
     private List<String> tags;
 

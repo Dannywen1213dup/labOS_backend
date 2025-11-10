@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 /**
- * Spring MVC Json 配置
+ * Spring MVC Json Config
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -17,7 +17,7 @@ import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 public class JsonConfig {
 
     /**
-     * 添加 Long 转 json 精度丢失的配置
+     * Add configuration to prevent loss of precision when converting Long to JSON.
      */
     @Bean
     public ObjectMapper jacksonObjectMapper(Jackson2ObjectMapperBuilder builder) {

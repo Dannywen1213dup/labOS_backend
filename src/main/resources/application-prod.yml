@@ -1,35 +1,35 @@
-# 线上配置文件
+# Production configuration file
 # @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
 # @from <a href="https://www.ai4labos.com/">ai4labOS</a>
 server:
   port: 8101
 spring:
-  # 数据库配置
-  # todo 需替换配置
+  # Database configuration
+  # todo Need to replace configuration
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/my_db
     username: root
     password: 123456
-  # Redis 配置
-  # todo 需替换配置
+  # Redis configuration
+  # todo Need to replace configuration
   redis:
     database: 1
     host: localhost
     port: 6379
     timeout: 5000
     password: 123456
-  # Elasticsearch 配置
-  # todo 需替换配置
+  # Elasticsearch configuration
+  # todo Need to replace configuration
   elasticsearch:
     uris: http://localhost:9200
     username: root
     password: 123456
 mybatis-plus:
   configuration:
-    # 生产环境关闭日志
+    # Disable logging in production environment
     log-impl: ''
-# 接口文档配置
+# API documentation configuration
 knife4j:
   basic:
     enable: true

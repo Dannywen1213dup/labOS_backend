@@ -10,7 +10,7 @@ import com.labOS.backend.model.entity.PostFavour;
 import org.apache.ibatis.annotations.Param;
 
 /**
- * 帖子收藏数据库操作
+ * Post collection database operations
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -18,7 +18,7 @@ import org.apache.ibatis.annotations.Param;
 public interface PostFavourMapper extends BaseMapper<PostFavour> {
 
     /**
-     * 分页查询收藏帖子列表
+     * View the list of favorite posts by pagination
      *
      * @param page
      * @param queryWrapper
