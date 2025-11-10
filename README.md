@@ -1,4 +1,4 @@
-# SpringBoot Project Initial Template
+# LabOS Project Backend
 
 > Author：[Yifan Wen](https://github.com/Dannywen1213dup)
 > Shared [ai4labOS](https://www.ai4labos.com/)
