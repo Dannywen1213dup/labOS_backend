@@ -1,7 +1,7 @@
 # Docker 镜像构建
 # @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
 # @from <a href="https://www.ai4labos.com/">ai4labOS</a>
-FROM maven:3.8.1-jdk-8-slim as builder
+FROM maven:3.8.6-jdk-8-slim as builder
 
 # Copy local code to the container image.
 WORKDIR /app
