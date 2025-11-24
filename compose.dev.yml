@@ -1,0 +1,44 @@
+version: '3.7'
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    network_mode: host
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      # Enable DevTools live reload
+      - SPRING_DEVTOOLS_RESTART_ENABLED=true
+      - SPRING_DEVTOOLS_LIVERELOAD_ENABLED=true
+    volumes:
+      # Mount source code for hot reload
+      - ./src:/app/src
+      - ./pom.xml:/app/pom.xml
+      # Mount config file
+      - ./application.yml:/app/config/application.yml
+      # Mount Maven local repository cache (optional, speeds up builds)
+      - maven-cache:/root/.m2
+    depends_on:
+      - redis
+    # Keep container running for development
+    stdin_open: true
+    tty: true
+
+  redis:
+    image: redis/redis-stack:latest
+    restart: always
+    ports:
+      - "6379:6379"
+      - "8001:8001"
+    volumes:
+      - ./data/redis:/data
+    networks:
+      - net
+
+networks:
+  net:
+    driver: bridge
+
+volumes:
+  maven-cache:
+

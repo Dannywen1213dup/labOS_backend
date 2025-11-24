@@ -12,4 +12,7 @@ COPY src ./src
 RUN mvn package -DskipTests
 
 # Run the web service on container startup.
-CMD ["java","-jar","/app/target/springboot-init-0.0.1-SNAPSHOT.jar","--spring.profiles.active=prod"]
+# Profile is controlled via SPRING_PROFILES_ACTIVE environment variable
+# Spring Boot will automatically load application.yml from /app/config/ directory (highest priority)
+# If not found, it falls back to classpath:/application.yml
+CMD ["java","-jar","/app/target/springboot-init-0.0.1-SNAPSHOT.jar"]

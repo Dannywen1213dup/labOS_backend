@@ -1,0 +1,23 @@
+# Development Dockerfile with hot reload support
+# @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
+# @from <a href="https://www.ai4labos.com/">ai4labOS</a>
+FROM maven:3.8.6-jdk-8-slim
+
+WORKDIR /app
+
+# Copy pom.xml first for better layer caching
+COPY pom.xml .
+
+# Download dependencies (this layer will be cached unless pom.xml changes)
+RUN mvn dependency:go-offline -B
+
+# Copy source code (will be overridden by volume mount in development)
+COPY src ./src
+
+# Expose the application port
+EXPOSE 8101
+
+# Run Spring Boot in development mode with hot reload
+# mvn spring-boot:run supports DevTools hot reload
+CMD ["mvn", "spring-boot:run", "-Dspring-boot.run.jvmArguments=-Dspring.profiles.active=dev"]
+

@@ -6,20 +6,26 @@ import com.labOS.backend.common.ResultUtils;
 import com.labOS.backend.constant.FileConstant;
 import com.labOS.backend.exception.BusinessException;
 import com.labOS.backend.manager.S3Manager;
+import com.labOS.backend.model.dto.file.BatchPresignedUrlRequest;
 import com.labOS.backend.model.dto.file.BatchUploadRequest;
 import com.labOS.backend.model.dto.file.CreateFolderRequest;
 import com.labOS.backend.model.dto.file.DeleteFolderRequest;
 import com.labOS.backend.model.dto.file.DownloadFolderRequest;
+import com.labOS.backend.model.dto.file.GeneratePresignedUrlRequest;
 import com.labOS.backend.model.dto.file.UploadProgressRequest;
+import com.labOS.backend.model.entity.User;
+import com.labOS.backend.model.vo.BatchPresignedUrlVO;
 import com.labOS.backend.model.vo.BatchUploadResultVO;
 import com.labOS.backend.model.vo.FolderInfoVO;
 import com.labOS.backend.model.vo.UploadProgressVO;
+import com.labOS.backend.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +44,10 @@ public class S3FolderController {
     @Resource
     private S3Manager s3Manager;
 
+    @Resource
+    private UserService userService;
+
+    // KEEP FOR NOW/REFERENCE
     /**
      * Create or retrieve the upload folder
      * Folder structure: labOS/{uuid}/{MMDDYYYY}/{count}/
@@ -48,6 +58,7 @@ public class S3FolderController {
      * @param createFolderRequest include uuid
      * @return Folder information
      */
+    /*
     @PostMapping("/create")
     public BaseResponse<FolderInfoVO> createFolder(@RequestBody CreateFolderRequest createFolderRequest) {
         if (createFolderRequest == null || StringUtils.isBlank(createFolderRequest.getUuid())) {
@@ -222,6 +233,309 @@ public class S3FolderController {
     }
 
     /**
+     * Generate presigned URL for uploading dataset files to S3
+     * 
+     * This endpoint generates a presigned URL that allows clients to upload dataset files directly to S3.
+     * Files are stored in: bucket/labOS/datasets/{userId}/{sanitizedFileName}
+     * 
+     * <p>Features:
+     * <ul>
+     *   <li>Automatically creates dataset folder based on logged-in user's ID</li>
+     *   <li>Sanitizes filename to ensure S3 bucket safety (removes special characters and SQL injection patterns)</li>
+     *   <li>Supports custom expiration time (default: 1 hour)</li>
+     *   <li>Returns presigned URL ready for direct client-side uploads to S3</li>
+     * </ul>
+     * 
+     * <p>Folder structure: labOS/datasets/{userId}/{sanitizedFileName}
+     * 
+     * <p>Request parameters:
+     * <ul>
+     *   <li>fileName (required): Name of the file to upload (will be sanitized)</li>
+     *   <li>expirationTime (optional): URL expiration in milliseconds (default: 3600000 = 1 hour)</li>
+     * </ul>
+     * 
+     * <p>Response: Presigned URL string that can be used with PUT request to upload the file
+     *
+     * @param generatePresignedUrlRequest request containing file name and optional expiration time
+     * @param request HTTP request (used to get logged-in user ID)
+     * @return BaseResponse containing the presigned URL for upload
+     */
+    @PostMapping("/presigned-upload-url/dataset")
+    public BaseResponse<String> generateDatasetPresignedUrl(
+            @RequestBody GeneratePresignedUrlRequest generatePresignedUrlRequest,
+            HttpServletRequest request) {
+        
+        if (generatePresignedUrlRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Request cannot be null");
+        }
+
+        String fileName = generatePresignedUrlRequest.getFileName();
+        if (StringUtils.isBlank(fileName)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "File name is required");
+        }
+
+        // Get logged-in user's ID
+        User loginUser = userService.getLoginUser(request);
+        String userId = String.valueOf(loginUser.getId());
+
+        // Create dataset folder: labOS/datasets/{userId}/
+        String folderPath = s3Manager.getOrCreateDatasetFolder(userId);
+        log.info("Using dataset folder: {}", folderPath);
+
+        // Sanitize filename to ensure S3 bucket safety
+        String sanitizedFileName = s3Manager.sanitizeFileName(fileName);
+        log.info("Sanitized filename: {} -> {}", fileName, sanitizedFileName);
+
+        // Build full S3 key (folder path + sanitized file name)
+        String s3Key = folderPath + sanitizedFileName;
+
+        // Get expiration time (default: 1 hour)
+        long expirationTime = generatePresignedUrlRequest.getExpirationTime() != null
+                ? generatePresignedUrlRequest.getExpirationTime()
+                : FileConstant.PRESIGNED_URL_EXPIRATION;
+
+        // Generate presigned URL for PUT/upload
+        String presignedUrl = s3Manager.generatePresignedUploadUrl(s3Key, expirationTime);
+
+        log.info("Generated dataset presigned upload URL for: {}", s3Key);
+        return ResultUtils.success(presignedUrl);
+    }
+
+    /**
+     * Generate presigned URL for uploading benchmark evaluation files to S3
+     * 
+     * This endpoint generates a presigned URL that allows clients to upload benchmark evaluation files directly to S3.
+     * Files are stored in: bucket/labOS/benchmark-eval/{userId}/{sanitizedFileName}
+     * 
+     * <p>Features:
+     * <ul>
+     *   <li>Automatically creates benchmark-eval folder based on logged-in user's ID</li>
+     *   <li>Sanitizes filename to ensure S3 bucket safety (removes special characters and SQL injection patterns)</li>
+     *   <li>Supports custom expiration time (default: 1 hour)</li>
+     *   <li>Returns presigned URL ready for direct client-side uploads to S3</li>
+     * </ul>
+     * 
+     * <p>Folder structure: labOS/benchmark-eval/{userId}/{sanitizedFileName}
+     * 
+     * <p>Request parameters:
+     * <ul>
+     *   <li>fileName (required): Name of the file to upload (will be sanitized)</li>
+     *   <li>expirationTime (optional): URL expiration in milliseconds (default: 3600000 = 1 hour)</li>
+     * </ul>
+     * 
+     * <p>Response: Presigned URL string that can be used with PUT request to upload the file
+     *
+     * @param generatePresignedUrlRequest request containing file name and optional expiration time
+     * @param request HTTP request (used to get logged-in user ID)
+     * @return BaseResponse containing the presigned URL for upload
+     */
+    @PostMapping("/presigned-upload-url/benchmark-eval")
+    public BaseResponse<String> generateBenchmarkEvalPresignedUrl(
+            @RequestBody GeneratePresignedUrlRequest generatePresignedUrlRequest,
+            HttpServletRequest request) {
+        
+        if (generatePresignedUrlRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Request cannot be null");
+        }
+
+        String fileName = generatePresignedUrlRequest.getFileName();
+        if (StringUtils.isBlank(fileName)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "File name is required");
+        }
+
+        // Get logged-in user's ID
+        User loginUser = userService.getLoginUser(request);
+        String userId = String.valueOf(loginUser.getId());
+
+        // Create benchmark-eval folder: labOS/benchmark-eval/{userId}/
+        String folderPath = s3Manager.getOrCreateBenchmarkEvalFolder(userId);
+        log.info("Using benchmark-eval folder: {}", folderPath);
+
+        // Sanitize filename to ensure S3 bucket safety
+        String sanitizedFileName = s3Manager.sanitizeFileName(fileName);
+        log.info("Sanitized filename: {} -> {}", fileName, sanitizedFileName);
+
+        // Build full S3 key (folder path + sanitized file name)
+        String s3Key = folderPath + sanitizedFileName;
+
+        // Get expiration time (default: 1 hour)
+        long expirationTime = generatePresignedUrlRequest.getExpirationTime() != null
+                ? generatePresignedUrlRequest.getExpirationTime()
+                : FileConstant.PRESIGNED_URL_EXPIRATION;
+
+        // Generate presigned URL for PUT/upload
+        String presignedUrl = s3Manager.generatePresignedUploadUrl(s3Key, expirationTime);
+
+        log.info("Generated benchmark-eval presigned upload URL for: {}", s3Key);
+        return ResultUtils.success(presignedUrl);
+    }
+
+    /**
+     * Generate batch presigned URLs for uploading benchmark evaluation files to S3
+     * 
+     * This endpoint generates multiple presigned URLs that allow clients to upload benchmark evaluation files directly to S3.
+     * Files are stored in: bucket/labOS/benchmark-eval/{userId}/{sanitizedFileName}
+     * 
+     * <p>Features:
+     * <ul>
+     *   <li>Automatically creates benchmark-eval folder based on logged-in user's ID</li>
+     *   <li>Sanitizes filenames to ensure S3 bucket safety (removes special characters and SQL injection patterns)</li>
+     *   <li>Supports custom expiration time (default: 1 hour)</li>
+     *   <li>Returns presigned URLs ready for direct client-side uploads to S3</li>
+     * </ul>
+     * 
+     * <p>Folder structure: labOS/benchmark-eval/{userId}/{sanitizedFileName}
+     * 
+     * <p>Request parameters:
+     * <ul>
+     *   <li>fileNames (required): List of file names to upload (will be sanitized)</li>
+     *   <li>expirationTime (optional): URL expiration in milliseconds (default: 3600000 = 1 hour)</li>
+     * </ul>
+     * 
+     * <p>Response: List of presigned URL entries, each containing original file name, sanitized file name, and presigned URL
+     *
+     * @param batchPresignedUrlRequest request containing list of file names and optional expiration time
+     * @param request HTTP request (used to get logged-in user ID)
+     * @return BaseResponse containing list of presigned URLs for upload
+     */
+    @PostMapping("/presigned-upload-url/benchmark-eval/batch")
+    public BaseResponse<BatchPresignedUrlVO> generateBatchBenchmarkEvalPresignedUrls(
+            @RequestBody BatchPresignedUrlRequest batchPresignedUrlRequest,
+            HttpServletRequest request) {
+        
+        if (batchPresignedUrlRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Request cannot be null");
+        }
+
+        List<String> fileNames = batchPresignedUrlRequest.getFileNames();
+        if (fileNames == null || fileNames.isEmpty()) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "File names list cannot be empty");
+        }
+
+        // Get logged-in user's ID
+        User loginUser = userService.getLoginUser(request);
+        String userId = String.valueOf(loginUser.getId());
+
+        // Create benchmark-eval folder: labOS/benchmark-eval/{userId}/
+        String folderPath = s3Manager.getOrCreateBenchmarkEvalFolder(userId);
+        log.info("Using benchmark-eval folder: {}", folderPath);
+
+        // Get expiration time (default: 1 hour)
+        long expirationTime = batchPresignedUrlRequest.getExpirationTime() != null
+                ? batchPresignedUrlRequest.getExpirationTime()
+                : FileConstant.PRESIGNED_URL_EXPIRATION;
+
+        // Generate presigned URLs for each file
+        List<BatchPresignedUrlVO.PresignedUrlEntry> entries = new ArrayList<>();
+        for (String fileName : fileNames) {
+            if (StringUtils.isBlank(fileName)) {
+                log.warn("Skipping blank file name in batch request");
+                continue;
+            }
+
+            // Sanitize filename to ensure S3 bucket safety
+            String sanitizedFileName = s3Manager.sanitizeFileName(fileName);
+            log.info("Sanitized filename: {} -> {}", fileName, sanitizedFileName);
+
+            // Build full S3 key (folder path + sanitized file name)
+            String s3Key = folderPath + sanitizedFileName;
+
+            // Generate presigned URL for PUT/upload
+            String presignedUrl = s3Manager.generatePresignedUploadUrl(s3Key, expirationTime);
+
+            // Create entry
+            BatchPresignedUrlVO.PresignedUrlEntry entry = new BatchPresignedUrlVO.PresignedUrlEntry();
+            entry.setFileName(fileName);
+            entry.setSanitizedFileName(sanitizedFileName);
+            entry.setPresignedUrl(presignedUrl);
+            entries.add(entry);
+
+            log.info("Generated benchmark-eval presigned upload URL for: {}", s3Key);
+        }
+
+        // Build response
+        BatchPresignedUrlVO response = new BatchPresignedUrlVO();
+        response.setEntries(entries);
+
+        log.info("Generated {} benchmark-eval presigned upload URLs", entries.size());
+        return ResultUtils.success(response);
+    }
+
+    // KEEP FOR NOW/REFERENCE
+    /*
+    /**
+     * Generate presigned URL for uploading objects to S3
+     * 
+     * This endpoint generates a presigned URL that allows clients to upload files directly to S3
+     * without going through the backend server. The URL is valid for a specified expiration time.
+     * 
+     * <p>Features:
+     * <ul>
+     *   <li>Automatically creates folder based on logged-in user's ID</li>
+     *   <li>Sanitizes filename to ensure S3 bucket safety (removes special characters)</li>
+     *   <li>Supports custom expiration time (default: 1 hour)</li>
+     *   <li>Returns presigned URL ready for direct client-side uploads to S3</li>
+     * </ul>
+     * 
+     * <p>Folder structure: labOS/{userId}/{MMDDYYYY}/{count}/{sanitizedFileName}
+     * 
+     * <p>Request parameters:
+     * <ul>
+     *   <li>fileName (required): Name of the file to upload (will be sanitized)</li>
+     *   <li>expirationTime (optional): URL expiration in milliseconds (default: 3600000 = 1 hour)</li>
+     * </ul>
+     * 
+     * <p>Response: Presigned URL string that can be used with PUT request to upload the file
+     *
+     * @param generatePresignedUrlRequest request containing file name and optional expiration time
+     * @param request HTTP request (used to get logged-in user ID)
+     * @return BaseResponse containing the presigned URL for upload
+     */
+    /*
+    @PostMapping("/presigned-upload-url")
+    public BaseResponse<String> generatePresignedUploadUrl(
+            @RequestBody GeneratePresignedUrlRequest generatePresignedUrlRequest,
+            HttpServletRequest request) {
+        
+        if (generatePresignedUrlRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Request cannot be null");
+        }
+
+        String fileName = generatePresignedUrlRequest.getFileName();
+        if (StringUtils.isBlank(fileName)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "File name is required");
+        }
+
+        // Get logged-in user's ID
+        User loginUser = userService.getLoginUser(request);
+        String userId = String.valueOf(loginUser.getId());
+
+        // Create folder structure based on user ID: labOS/{userId}/{MMDDYYYY}/{count}/
+        String folderPath = s3Manager.getOrCreateUploadFolder(userId);
+        log.info("Created folder for presigned URL: {}", folderPath);
+
+        // Sanitize filename to ensure S3 bucket safety
+        String sanitizedFileName = s3Manager.sanitizeFileName(fileName);
+        log.info("Sanitized filename: {} -> {}", fileName, sanitizedFileName);
+
+        // Build full S3 key (folder path + sanitized file name)
+        String s3Key = folderPath + sanitizedFileName;
+
+        // Get expiration time (default: 1 hour)
+        long expirationTime = generatePresignedUrlRequest.getExpirationTime() != null
+                ? generatePresignedUrlRequest.getExpirationTime()
+                : FileConstant.PRESIGNED_URL_EXPIRATION;
+
+        // Generate presigned URL for PUT/upload
+        String presignedUrl = s3Manager.generatePresignedUploadUrl(s3Key, expirationTime);
+
+        log.info("Generated presigned upload URL for: {}", s3Key);
+        return ResultUtils.success(presignedUrl);
+    }
+    */
+
+    // KEEP FOR NOW/REFERENCE
+    /**
      * Batch upload files to specified folder
      * If folderPath is not provided, a new folder will be created automatically
      * If folderPath is provided, files will be uploaded to the specified folder
@@ -231,6 +545,7 @@ public class S3FolderController {
      * @param folderPath Folder path (optional)
      * @return Upload result
      */
+    /*
     @PostMapping("/batch-upload")
     public BaseResponse<BatchUploadResultVO> batchUpload(
             @RequestPart("files") MultipartFile[] files,
@@ -339,6 +654,7 @@ public class S3FolderController {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "Batch upload failed");
         }
     }
+    */
 
     /**
      * Validate folder path format

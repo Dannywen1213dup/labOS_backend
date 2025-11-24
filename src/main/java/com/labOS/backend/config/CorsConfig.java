@@ -1,7 +1,9 @@
 package com.labOS.backend.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.CorsRegistration;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
@@ -13,17 +15,29 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
 
+    @Value("${cors.allowed-origins:http://localhost:8080,http://localhost:5173,http://localhost:3000}")
+    private String allowedOrigins;
+
+    @Value("${cors.enable-all-origins:false}")
+    private boolean enableAllOrigins;
+
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         // covers every requests
-        registry.addMapping("/**")
+        CorsRegistration corsRegistration = registry.addMapping("/**")
                 // permitted to send Cookie
                 .allowCredentials(true)
-                // Allow which domains (must use patterns, otherwise the wildcard * will conflict with allowCredentials)
-
-                .allowedOriginPatterns("*")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .exposedHeaders("*");
+
+        // In development, allow all origins if enabled, otherwise use configured origins
+        if (enableAllOrigins) {
+            corsRegistration.allowedOriginPatterns("*");
+        } else {
+            // Split comma-separated origins and add them
+            String[] origins = allowedOrigins.split(",");
+            corsRegistration.allowedOriginPatterns(origins);
+        }
     }
 }

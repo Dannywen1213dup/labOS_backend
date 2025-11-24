@@ -1,54 +1,56 @@
+version: '3.7'
 services:
   backend:
     build:
       context: .
       dockerfile: Dockerfile
-    ports:
-      - "8101:8101"
+    network_mode: host
     environment:
       - SPRING_PROFILES_ACTIVE=dev
-    networks:
-      - net
+    volumes:
+      # Mount to Spring Boot's default config directory (highest priority)
+      # Spring Boot searches: ./config/ > ./ > classpath:/config/ > classpath:/
+      - ./application.yml:/app/config/application.yml
     depends_on:
-      - db
+      # - db
       - redis
-      - elastic_search
-  db:
-    image: mysql:latest
-    ports:
-      - "3306:3306"
-    environment:
-      MYSQL_ROOT_PASSWORD: 20040812
-      MYSQL_DATABASE: my_db
-    volumes:
-      - ./data/sql:/var/lib/mysql
-    networks:
-      - net
-  elastic_search:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.6.2
-    restart: unless-stopped
-    ports:
-      - 9200:9200
-      - 9300:9300
-    volumes:
-      - ./data/elastic_search:/usr/share/elasticsearch/data
-    mem_limit: 1g
-    environment:
-      - discovery.type=single-node
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-      - xpack.security.enabled=false  # Disable security for local development
-    networks:
-      - net
-  kibana:
-    image: docker.elastic.co/kibana/kibana:8.6.2
-    ports:
-      - 5601:5601
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-    networks:
-      - net
-    depends_on:
-      - elastic_search
+      # - elastic_search
+  # db:
+  #   image: mysql:latest
+  #   ports:
+  #     - "3306:3306"
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: 20040812
+  #     MYSQL_DATABASE: my_db
+  #   volumes:
+  #     - ./data/sql:/var/lib/mysql
+  #   networks:
+  #     - net
+  # elastic_search:
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:8.6.2
+  #   restart: unless-stopped
+  #   ports:
+  #     - 9200:9200
+  #     - 9300:9300
+  #   volumes:
+  #     - ./data/elastic_search:/usr/share/elasticsearch/data
+  #   mem_limit: 1g
+  #   environment:
+  #     - discovery.type=single-node
+  #     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+  #     - xpack.security.enabled=false  # Disable security for local development
+  #   networks:
+  #     - net
+  # kibana:
+  #   image: docker.elastic.co/kibana/kibana:8.6.2
+  #   ports:
+  #     - 5601:5601
+  #   environment:
+  #     - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+  #   networks:
+  #     - net
+  #   depends_on:
+  #     - elastic_search
 
   redis:
     image: redis/redis-stack:latest
@@ -63,19 +65,19 @@ services:
     networks:
       - net
 
-  minio:
-    image: minio/minio:latest
-    ports:
-      - '9000:9000'
-      - '9001:9001'
-    environment:
-      - MINIO_ROOT_USER=labos
-      - MINIO_ROOT_PASSWORD=labos20040812
-      - MINIO_DEFAULT_BUCKETS=labos
-    volumes:
-      - ./data/minio:/data
-    networks:
-      - net
+  # minio:
+  #   image: minio/minio:latest
+  #   ports:
+  #     - '9000:9000'
+  #     - '9001:9001'
+  #   environment:
+  #     - MINIO_ROOT_USER=labos
+  #     - MINIO_ROOT_PASSWORD=labos20040812
+  #     - MINIO_DEFAULT_BUCKETS=labos
+  #   volumes:
+  #     - ./data/minio:/data
+  #   networks:
+  #     - net
 
 networks:
   net:
