@@ -351,40 +351,6 @@ public class S3Manager {
     }
 
     /**
-     * Configure CORS on the S3 bucket to allow uploads from frontend origins
-     * This should be called once during setup or can be done manually via AWS Console
-     *
-     * @param allowedOrigins list of allowed origins (e.g., http://localhost:8080, https://example.com)
-     */
-    public void configureBucketCors(List<String> allowedOrigins) {
-        try {
-            BucketCrossOriginConfiguration configuration = new BucketCrossOriginConfiguration();
-            List<CORSRule> corsRules = new ArrayList<>();
-            
-            CORSRule corsRule = new CORSRule();
-            corsRule.setAllowedOrigins(allowedOrigins);
-            corsRule.setAllowedMethods(Arrays.asList("GET", "PUT", "POST", "DELETE", "HEAD"));
-            corsRule.setAllowedHeaders(Arrays.asList("*"));
-            corsRule.setExposedHeaders(Arrays.asList("ETag", "x-amz-server-side-encryption", 
-                    "x-amz-request-id", "x-amz-id-2"));
-            corsRule.setMaxAgeSeconds(3000);
-            corsRule.setAllowCredentials(true);
-            
-            corsRules.add(corsRule);
-            configuration.setRules(corsRules);
-            
-            SetBucketCrossOriginConfigurationRequest request = new SetBucketCrossOriginConfigurationRequest(
-                    s3ClientConfig.getBucket(), configuration);
-            amazonS3.setBucketCrossOriginConfiguration(request);
-            
-            log.info("Successfully configured CORS for bucket: {}", s3ClientConfig.getBucket());
-        } catch (Exception e) {
-            log.error("Failed to configure CORS for bucket: {}", s3ClientConfig.getBucket(), e);
-            throw new RuntimeException("Failed to configure S3 bucket CORS", e);
-        }
-    }
-
-    /**
      * Create Latin character map for character replacement
      *
      * @return Map of Latin characters to ASCII equivalents
@@ -637,40 +603,5 @@ public class S3Manager {
         } while (result.isTruncated());
 
         return files;
-    }
-
-    /**
-     * Configure CORS on the S3 bucket to allow uploads from frontend origins
-     * This should be called once during setup or can be done manually via AWS Console
-     *
-     * @param allowedOrigins list of allowed origins (e.g., http://localhost:8080, https://example.com)
-     */
-    public void configureBucketCors(List<String> allowedOrigins) {
-        try {
-            BucketCrossOriginConfiguration configuration = new BucketCrossOriginConfiguration();
-            List<CORSRule> corsRules = new ArrayList<>();
-            
-            CORSRule corsRule = new CORSRule();
-            corsRule.setAllowedOrigins(allowedOrigins);
-            corsRule.setAllowedMethods(Arrays.asList("GET", "PUT", "POST", "DELETE", "HEAD", "OPTIONS"));
-            corsRule.setAllowedHeaders(Arrays.asList("*"));
-            corsRule.setExposedHeaders(Arrays.asList("ETag", "x-amz-server-side-encryption", 
-                    "x-amz-request-id", "x-amz-id-2"));
-            corsRule.setMaxAgeSeconds(3000);
-            corsRule.setAllowCredentials(true);
-            
-            corsRules.add(corsRule);
-            configuration.setRules(corsRules);
-            
-            SetBucketCrossOriginConfigurationRequest request = new SetBucketCrossOriginConfigurationRequest(
-                    s3ClientConfig.getBucket(), configuration);
-            amazonS3.setBucketCrossOriginConfiguration(request);
-            
-            log.info("Successfully configured CORS for bucket: {} with origins: {}", 
-                    s3ClientConfig.getBucket(), allowedOrigins);
-        } catch (Exception e) {
-            log.error("Failed to configure CORS for bucket: {}", s3ClientConfig.getBucket(), e);
-            throw new RuntimeException("Failed to configure S3 bucket CORS: " + e.getMessage(), e);
-        }
     }
 }
