@@ -7,26 +7,16 @@ import com.labOS.backend.constant.FileConstant;
 import com.labOS.backend.exception.BusinessException;
 import com.labOS.backend.manager.S3Manager;
 import com.labOS.backend.model.dto.file.BatchPresignedUrlRequest;
-import com.labOS.backend.model.dto.file.BatchUploadRequest;
-import com.labOS.backend.model.dto.file.CreateFolderRequest;
-import com.labOS.backend.model.dto.file.DeleteFolderRequest;
-import com.labOS.backend.model.dto.file.DownloadFolderRequest;
 import com.labOS.backend.model.dto.file.GeneratePresignedUrlRequest;
-import com.labOS.backend.model.dto.file.UploadProgressRequest;
 import com.labOS.backend.model.entity.User;
 import com.labOS.backend.model.vo.BatchPresignedUrlVO;
-import com.labOS.backend.model.vo.BatchUploadResultVO;
-import com.labOS.backend.model.vo.FolderInfoVO;
-import com.labOS.backend.model.vo.UploadProgressVO;
 import com.labOS.backend.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -97,6 +87,7 @@ public class S3FolderController {
      * @param deleteFolderRequest Contains folder path
      * @return is successfully deleted
      */
+    /*
     @PostMapping("/delete")
     public BaseResponse<Boolean> deleteFolder(@RequestBody DeleteFolderRequest deleteFolderRequest) {
         if (deleteFolderRequest == null || StringUtils.isBlank(deleteFolderRequest.getFolderPath())) {
@@ -126,6 +117,7 @@ public class S3FolderController {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "Failed to delete folder");
         }
     }
+    */
 
     /**
      *  Get the folder download link (ZIP format）
@@ -134,6 +126,7 @@ public class S3FolderController {
      * @param downloadFolderRequest Contains folder path
      * @return downloads URL
      */
+    /*
     @PostMapping("/download")
     public BaseResponse<String> downloadFolder(@RequestBody DownloadFolderRequest downloadFolderRequest) {
         if (downloadFolderRequest == null || StringUtils.isBlank(downloadFolderRequest.getFolderPath())) {
@@ -183,6 +176,7 @@ public class S3FolderController {
             }
         }
     }
+    */
 
     /**
      * Query upload progress
@@ -191,6 +185,7 @@ public class S3FolderController {
      * @param uploadProgressRequest Contains folder path
      * @return Upload progress information
      */
+    /*
     @PostMapping("/progress")
     public BaseResponse<UploadProgressVO> getUploadProgress(@RequestBody UploadProgressRequest uploadProgressRequest) {
         if (uploadProgressRequest == null || StringUtils.isBlank(uploadProgressRequest.getFolderPath())) {
@@ -231,6 +226,7 @@ public class S3FolderController {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "Failed to get upload progress");
         }
     }
+    */
 
     /**
      * Generate presigned URL for uploading dataset files to S3
@@ -274,9 +270,17 @@ public class S3FolderController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "File name is required");
         }
 
-        // Get logged-in user's ID
-        User loginUser = userService.getLoginUser(request);
+        // Use Sa-Token to verify login and get user information
+        com.labOS.backend.satoken.SaTokenUtil.checkLogin();
+        com.labOS.backend.model.vo.LoginUserVO loginUser = com.labOS.backend.satoken.SaTokenUtil.getUser();
+        
+        if (loginUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "User not logged in");
+        }
+        
         String userId = String.valueOf(loginUser.getId());
+        log.info("Dataset upload request - User: {}, UserName: {}, Role: {}", 
+                userId, loginUser.getUserName(), loginUser.getUserRole());
 
         // Create dataset folder: labOS/datasets/{userId}/
         String folderPath = s3Manager.getOrCreateDatasetFolder(userId);
@@ -343,9 +347,17 @@ public class S3FolderController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "File name is required");
         }
 
-        // Get logged-in user's ID
-        User loginUser = userService.getLoginUser(request);
+        // Use Sa-Token to verify login and get user information
+        com.labOS.backend.satoken.SaTokenUtil.checkLogin();
+        com.labOS.backend.model.vo.LoginUserVO loginUser = com.labOS.backend.satoken.SaTokenUtil.getUser();
+        
+        if (loginUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "User not logged in");
+        }
+        
         String userId = String.valueOf(loginUser.getId());
+        log.info("Benchmark-eval upload request - User: {}, UserName: {}, Role: {}", 
+                userId, loginUser.getUserName(), loginUser.getUserRole());
 
         // Create benchmark-eval folder: labOS/benchmark-eval/{userId}/
         String folderPath = s3Manager.getOrCreateBenchmarkEvalFolder(userId);
@@ -412,9 +424,30 @@ public class S3FolderController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "File names list cannot be empty");
         }
 
-        // Get logged-in user's ID
-        User loginUser = userService.getLoginUser(request);
+        // Use Sa-Token to verify login and get user information
+        com.labOS.backend.satoken.SaTokenUtil.checkLogin();
+        com.labOS.backend.model.vo.LoginUserVO loginUser = com.labOS.backend.satoken.SaTokenUtil.getUser();
+        
+        if (loginUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "User not logged in");
+        }
+        
         String userId = String.valueOf(loginUser.getId());
+        
+        // Get user details from database to access email
+        User userEntity = userService.getById(loginUser.getId());
+        if (userEntity == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "User not found");
+        }
+        
+        // Log user information including email
+        log.info("=== Batch Benchmark-Eval Upload Request ===");
+        log.info("User ID: {}", userId);
+        log.info("User Name: {}", loginUser.getUserName());
+        log.info("User Email: {}", userEntity.getEmail());
+        log.info("User Role: {}", loginUser.getUserRole());
+        log.info("File Count: {}", fileNames.size());
+        log.info("==========================================");
 
         // Create benchmark-eval folder: labOS/benchmark-eval/{userId}/
         String folderPath = s3Manager.getOrCreateBenchmarkEvalFolder(userId);

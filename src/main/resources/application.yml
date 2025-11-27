@@ -43,6 +43,23 @@ spring:
     multipart:
       # Size limit
       max-file-size: 10MB
+  # Mail configuration
+  mail:
+    host: smtp.gmail.com  # Change to your SMTP server
+    port: 587
+    username: ${MAIL_USERNAME:}  # Set via environment variable or replace
+    password: ${MAIL_PASSWORD:}  # Set via environment variable or replace
+    default-encoding: UTF-8
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
 server:
   address: 0.0.0.0
   port: 8101
@@ -100,3 +117,27 @@ knife4j:
         api-rule: package
         api-rule-resources:
           - com.labOS.backend.controller
+# Sa-Token configuration
+sa-token:
+  # Token name (default: satoken)
+  token-name: satoken
+  # Token validity period (in seconds, -1 means never expire) 
+  # 2592000 = 30 days
+  timeout: 2592000
+  # Token temporary validity period (in seconds, -1 means never expire)
+  activity-timeout: -1
+  # Whether to allow concurrent login with the same account (true: allow, false: not allow, will kick out previous login)
+  is-concurrent: true
+  # Whether to share one token when multiple clients login with the same account (true: share token, false: separate tokens)
+  is-share: true
+  # Token style (default: uuid, options: uuid, simple-uuid, random-32, random-64, random-128, tik)
+  token-style: uuid
+  # Whether to output operation logs
+  is-log: false
+# labOS project configuration
+labos:
+  name: labOS Backend System
+  version: 1.0.0
+  # Additional paths that don't need Sa-Token authentication
+  sa-token-not-filter-url:
+    - /api/test/**

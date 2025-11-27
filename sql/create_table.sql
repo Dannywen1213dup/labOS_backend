@@ -3,65 +3,84 @@
 # @from <a href="https://www.ai4labos.com/">ai4labOS</a>
 
 -- Create database
-create database if not exists my_db;
+CREATE DATABASE IF NOT EXISTS my_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Use database
-use my_db;
+USE my_db;
 
--- User table
-create table if not exists user
+-- ============================================
+-- User table (with authentication fields)
+-- ============================================
+DROP TABLE IF EXISTS `user`;
+CREATE TABLE `user`
 (
-    id           bigint auto_increment comment 'id' primary key,
-    userAccount  varchar(256)                           not null comment 'Account',
-    userPassword varchar(512)                           not null comment 'Password',
-    unionId      varchar(256)                           null comment 'WeChat Open Platform id',
-    mpOpenId     varchar(256)                           null comment 'Official account openId',
-    userName     varchar(256)                           null comment 'User nickname',
-    userAvatar   varchar(1024)                          null comment 'User avatar',
-    userProfile  varchar(512)                           null comment 'User profile',
-    userRole     varchar(256) default 'user'            not null comment 'User role: user/admin/ban',
-    createTime   datetime     default CURRENT_TIMESTAMP not null comment 'Create time',
-    updateTime   datetime     default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment 'Update time',
-    isDelete     tinyint      default 0                 not null comment 'Is deleted',
-    index idx_unionId (unionId)
-) comment 'User' collate = utf8mb4_unicode_ci;
+    `id`             BIGINT AUTO_INCREMENT COMMENT 'id' PRIMARY KEY,
+    `userAccount`    VARCHAR(256)                           NULL COMMENT 'Account (legacy, can be email for compatibility)',
+    `email`          VARCHAR(100)                           NULL COMMENT 'Email address (unique, primary login method)',
+    `userPassword`   VARCHAR(512)                           NOT NULL COMMENT 'Password',
+    `firstName`      VARCHAR(50)                            NULL COMMENT 'First name',
+    `lastName`       VARCHAR(50)                            NULL COMMENT 'Last name',
+    `legalAccepted`  TINYINT(1)    DEFAULT 0                NOT NULL COMMENT 'Legal terms accepted (0: no, 1: yes)',
+    `status`         VARCHAR(20)   DEFAULT 'UNVERIFIED'     NOT NULL COMMENT 'User status: UNVERIFIED, ACTIVE, DISABLED',
+    `unionId`        VARCHAR(256)                           NULL COMMENT 'WeChat Open Platform id',
+    `mpOpenId`       VARCHAR(256)                           NULL COMMENT 'Official account openId',
+    `userName`       VARCHAR(256)                           NULL COMMENT 'User nickname',
+    `userAvatar`     VARCHAR(1024)                          NULL COMMENT 'User avatar',
+    `userProfile`    VARCHAR(512)                           NULL COMMENT 'User profile',
+    `userRole`       VARCHAR(256)  DEFAULT 'user'           NOT NULL COMMENT 'User role: user/admin/ban',
+    `createTime`     DATETIME      DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT 'Create time',
+    `updateTime`     DATETIME      DEFAULT CURRENT_TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT 'Update time',
+    `isDelete`       TINYINT       DEFAULT 0                 NOT NULL COMMENT 'Is deleted',
+    INDEX `idx_unionId` (`unionId`),
+    UNIQUE INDEX `idx_email` (`email`),
+    INDEX `idx_status` (`status`)
+) COMMENT 'User' COLLATE = utf8mb4_unicode_ci;
 
+-- ============================================
 -- Post table
-create table if not exists post
+-- ============================================
+DROP TABLE IF EXISTS `post`;
+CREATE TABLE `post`
 (
-    id         bigint auto_increment comment 'id' primary key,
-    title      varchar(512)                       null comment 'Title',
-    content    text                               null comment 'Content',
-    tags       varchar(1024)                      null comment 'Tag list (JSON array)',
-    thumbNum   int      default 0                 not null comment 'Thumb count',
-    favourNum  int      default 0                 not null comment 'Favour count',
-    userId     bigint                             not null comment 'Creator user id',
-    createTime datetime default CURRENT_TIMESTAMP not null comment 'Create time',
-    updateTime datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment 'Update time',
-    isDelete   tinyint  default 0                 not null comment 'Is deleted',
-    index idx_userId (userId)
-) comment 'Post' collate = utf8mb4_unicode_ci;
+    `id`         BIGINT AUTO_INCREMENT COMMENT 'id' PRIMARY KEY,
+    `title`      VARCHAR(512)                       NULL COMMENT 'Title',
+    `content`    TEXT                               NULL COMMENT 'Content',
+    `tags`       VARCHAR(1024)                      NULL COMMENT 'Tag list (JSON array)',
+    `thumbNum`   INT      DEFAULT 0                 NOT NULL COMMENT 'Thumb count',
+    `favourNum`  INT      DEFAULT 0                 NOT NULL COMMENT 'Favour count',
+    `userId`     BIGINT                             NOT NULL COMMENT 'Creator user id',
+    `createTime` DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT 'Create time',
+    `updateTime` DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT 'Update time',
+    `isDelete`   TINYINT  DEFAULT 0                 NOT NULL COMMENT 'Is deleted',
+    INDEX `idx_userId` (`userId`)
+) COMMENT 'Post' COLLATE = utf8mb4_unicode_ci;
 
+-- ============================================
 -- Post thumb table (hard delete)
-create table if not exists post_thumb
+-- ============================================
+DROP TABLE IF EXISTS `post_thumb`;
+CREATE TABLE `post_thumb`
 (
-    id         bigint auto_increment comment 'id' primary key,
-    postId     bigint                             not null comment 'Post id',
-    userId     bigint                             not null comment 'Creator user id',
-    createTime datetime default CURRENT_TIMESTAMP not null comment 'Create time',
-    updateTime datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment 'Update time',
-    index idx_postId (postId),
-    index idx_userId (userId)
-) comment 'Post thumb';
+    `id`         BIGINT AUTO_INCREMENT COMMENT 'id' PRIMARY KEY,
+    `postId`     BIGINT                             NOT NULL COMMENT 'Post id',
+    `userId`     BIGINT                             NOT NULL COMMENT 'Creator user id',
+    `createTime` DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT 'Create time',
+    `updateTime` DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT 'Update time',
+    INDEX `idx_postId` (`postId`),
+    INDEX `idx_userId` (`userId`)
+) COMMENT 'Post thumb' COLLATE = utf8mb4_unicode_ci;
 
+-- ============================================
 -- Post favour table (hard delete)
-create table if not exists post_favour
+-- ============================================
+DROP TABLE IF EXISTS `post_favour`;
+CREATE TABLE `post_favour`
 (
-    id         bigint auto_increment comment 'id' primary key,
-    postId     bigint                             not null comment 'Post id',
-    userId     bigint                             not null comment 'Creator user id',
-    createTime datetime default CURRENT_TIMESTAMP not null comment 'Create time',
-    updateTime datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment 'Update time',
-    index idx_postId (postId),
-    index idx_userId (userId)
-) comment 'Post favour';
+    `id`         BIGINT AUTO_INCREMENT COMMENT 'id' PRIMARY KEY,
+    `postId`     BIGINT                             NOT NULL COMMENT 'Post id',
+    `userId`     BIGINT                             NOT NULL COMMENT 'Creator user id',
+    `createTime` DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT 'Create time',
+    `updateTime` DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT 'Update time',
+    INDEX `idx_postId` (`postId`),
+    INDEX `idx_userId` (`userId`)
+) COMMENT 'Post favour' COLLATE = utf8mb4_unicode_ci;

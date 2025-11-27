@@ -31,9 +31,34 @@ public class User implements Serializable {
     private String userAccount;
 
     /**
+     * Email address (unique, primary login method)
+     */
+    private String email;
+
+    /**
      * User password
      */
     private String userPassword;
+
+    /**
+     * First name
+     */
+    private String firstName;
+
+    /**
+     * Last name
+     */
+    private String lastName;
+
+    /**
+     * Legal terms accepted (0: no, 1: yes)
+     */
+    private Integer legalAccepted;
+
+    /**
+     * User status: UNVERIFIED, ACTIVE, DISABLED
+     */
+    private String status;
 
     /**
      * Open platform id
