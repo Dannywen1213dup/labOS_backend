@@ -146,4 +146,10 @@ fabric.properties
 .idea/caches/build_file_checksums.ser
 
 
+# Application configuration files (contains sensitive information)
 src/main/resources/application.yml
+src/main/resources/application-test.yml
+src/main/resources/application-prod.yml
+
+# Application configuration example files (safe to commit)
+!src/main/resources/application*.example.yml
