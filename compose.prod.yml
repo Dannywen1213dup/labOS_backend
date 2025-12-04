@@ -24,34 +24,33 @@ services:
     env_file:
       - .env
     environment:
-      # Spring Boot profile
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
       # Session configuration (enable Redis session in production)
-      - SPRING_SESSION_STORE_TYPE=${SPRING_SESSION_STORE_TYPE:redis}
+      - SPRING_SESSION_STORE_TYPE=${SPRING_SESSION_STORE_TYPE:-redis}
       # Redis configuration
       - SPRING_REDIS_HOST=${SPRING_REDIS_HOST}
       - SPRING_REDIS_PORT=${SPRING_REDIS_PORT}
-      - SPRING_REDIS_DATABASE=${SPRING_REDIS_DATABASE}
-      - SPRING_REDIS_TIMEOUT=${SPRING_REDIS_TIMEOUT}
-      - SPRING_REDIS_PASSWORD=${SPRING_REDIS_PASSWORD}
+      - SPRING_REDIS_DATABASE=${SPRING_REDIS_DATABASE:-1}
+      - SPRING_REDIS_TIMEOUT=${SPRING_REDIS_TIMEOUT:-5000}
+      - SPRING_REDIS_PASSWORD=${SPRING_REDIS_PASSWORD:-}
       # Database configuration (AWS RDS)
       - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
       # Server configuration
-      - SERVER_PORT=${SERVER_PORT}
-      - SERVER_CONTEXT_PATH=${SERVER_CONTEXT_PATH}
+      - SERVER_PORT=${SERVER_PORT:-8101}
+      - SERVER_CONTEXT_PATH=${SERVER_CONTEXT_PATH:-/api}
       # MyBatis configuration (use Slf4jImpl in production)
-      - MYBATIS_LOG_IMPL=${MYBATIS_LOG_IMPL:org.apache.ibatis.logging.slf4j.Slf4jImpl}
+      - MYBATIS_LOG_IMPL=${MYBATIS_LOG_IMPL:-org.apache.ibatis.logging.slf4j.Slf4jImpl}
       # AWS S3 configuration (production uses AWS S3, not MinIO)
       - AWS_S3_ACCESS_KEY=${AWS_S3_ACCESS_KEY}
       - AWS_S3_SECRET_KEY=${AWS_S3_SECRET_KEY}
       - AWS_S3_REGION=${AWS_S3_REGION}
       - AWS_S3_BUCKET=${AWS_S3_BUCKET}
       # Note: endpoint is optional for AWS S3 (uses region-based endpoints)
-      - AWS_S3_ENDPOINT=${AWS_S3_ENDPOINT}
+      - AWS_S3_ENDPOINT=${AWS_S3_ENDPOINT:-}
       # API documentation (disabled in production)
-      - KNIFE4J_ENABLE=${KNIFE4J_ENABLE:false}
+      - KNIFE4J_ENABLE=${KNIFE4J_ENABLE:-false}
     volumes:
       # Mount config file (uses environment variables)
       - ./application.yml:/app/config/application.yml:ro

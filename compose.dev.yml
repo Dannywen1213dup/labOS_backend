@@ -8,7 +8,6 @@
 #   docker compose --env-file .env.dev -f compose.dev.yml build
 #   docker compose --env-file .env.dev -f compose.dev.yml down
 #
-# version: '3.7'  # Removed - obsolete in newer Docker Compose versions
 services:
   backend:
     build:

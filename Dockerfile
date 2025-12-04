@@ -1,7 +1,7 @@
 # Production Dockerfile
 # @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
 # @from <a href="https://www.ai4labos.com/">ai4labOS</a>
-FROM maven:3.8.6-jdk-8-slim as builder
+FROM maven:3.8.6-jdk-8-slim AS builder
 
 # Copy local code to the container image.
 WORKDIR /app
@@ -12,7 +12,8 @@ COPY src ./src
 RUN mvn package -DskipTests
 
 # Production runtime stage
-FROM openjdk:8-jre-slim
+# FROM openjdk:8-jre-slim
+FROM eclipse-temurin:8-jre
 
 # Install curl for healthchecks
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
