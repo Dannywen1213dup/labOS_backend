@@ -12,7 +12,7 @@ import javax.annotation.Resource;
 
 /**
  * Email Service Implementation
- * Sends verification code emails to users
+ * Sends verification code and password reset emails to users
  *
  * @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
  * @from <a href="https://www.ai4labos.com/">ai4labOS</a>
@@ -56,6 +56,40 @@ public class EmailServiceImpl implements EmailService {
             log.error("Failed to send verification code email to: {}", toEmail, e);
             // Log the code anyway so development can continue
             log.warn("Verification code for {}: {}", toEmail, code);
+        }
+    }
+
+    @Override
+    @Async
+    public void sendPasswordResetCode(String toEmail, String resetToken) {
+        try {
+            if (mailSender == null || fromEmail == null || fromEmail.isEmpty()) {
+                log.warn("Email service not configured. Password reset token for {}: {}", toEmail, resetToken);
+                return;
+            }
+            
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(toEmail);
+            message.setSubject("labOS - Password Reset Code");
+            message.setText(String.format(
+                "Hello,\n\n" +
+                "You have requested to reset your password.\n\n" +
+                "Your password reset code is: %s\n\n" +
+                "This code will expire in 30 minutes.\n\n" +
+                "If you did not request a password reset, please ignore this email. " +
+                "Your password will remain unchanged.\n\n" +
+                "Best regards,\n" +
+                "labOS Team",
+                resetToken
+            ));
+            
+            mailSender.send(message);
+            log.info("Password reset email sent successfully to: {}", toEmail);
+        } catch (Exception e) {
+            log.error("Failed to send password reset email to: {}", toEmail, e);
+            // Log the token anyway so development can continue
+            log.warn("Password reset token for {}: {}", toEmail, resetToken);
         }
     }
 }
