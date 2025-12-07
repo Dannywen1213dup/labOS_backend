@@ -3,12 +3,11 @@ package com.labOS.backend.service.impl;
 import com.labOS.backend.service.EmailService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-
-import javax.annotation.Resource;
 
 /**
  * Email Service Implementation
@@ -21,7 +20,7 @@ import javax.annotation.Resource;
 @Slf4j
 public class EmailServiceImpl implements EmailService {
     
-    @Resource
+    @Autowired(required = false)
     private JavaMailSender mailSender;
     
     @Value("${spring.mail.username:}")

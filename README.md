@@ -71,7 +71,66 @@ A SpringBoot project initial based on Java for ai4labOS website, integrating com
 
 
 ## Quick Start
- 
+
+### Docker Compose Development Setup
+
+The project includes a Docker Compose setup for easy development with all services (MySQL, Redis, MinIO, Frontend, Backend, Nginx).
+
+#### Prerequisites
+- Docker and Docker Compose installed
+- `.env.dev` file configured (see below)
+
+#### Using the Helper Script (Recommended)
+
+```bash
+# Start all services
+./docker-compose-dev.sh up
+
+# Build and start
+./docker-compose-dev.sh up --build
+
+# Stop services
+./docker-compose-dev.sh down
+
+# View logs
+./docker-compose-dev.sh logs -f
+```
+
+#### Using Docker Compose Directly
+
+Since Docker Compose needs to load `.env.dev` for variable substitution, use the `--env-file` flag:
+
+```bash
+# Start all services
+docker compose --env-file .env.dev -f compose.dev.yml up
+
+# Build and start
+docker compose --env-file .env.dev -f compose.dev.yml up --build
+
+# Stop services
+docker compose --env-file .env.dev -f compose.dev.yml down
+```
+
+#### Environment Configuration
+
+All environment variables are stored in `.env.dev`. This file contains:
+- Port configurations (NGINX, Frontend, Backend, MySQL, Redis, MinIO)
+- Database credentials
+- Redis configuration
+- MinIO/S3 credentials
+- Spring Boot configuration
+- Frontend API base URL
+
+**Important**: The `.env.dev` file must exist and be properly configured before running Docker Compose commands.
+
+#### Access Points
+
+After starting the services:
+- **Frontend**: http://localhost:8000 (via Nginx reverse proxy)
+- **Backend API**: http://localhost:8000/api
+- **API Documentation**: http://localhost:8000/api/doc.html
+- **MinIO Console**: http://localhost:9001 (credentials in `.env.dev`)
+- **Redis Insight**: http://localhost:8001
 
 ### MySQL Database
 

@@ -1,0 +1,108 @@
+# Application configuration file
+# Uses environment variables for environment-specific values
+# @author <a href="https://github.com/Dannywen1213dup">Yifan Wen</a>
+# @from <a href="https://www.ai4labos.com/">ai4labOS</a>
+spring:
+  application:
+    name: springboot-init
+  # Profile is set via SPRING_PROFILES_ACTIVE environment variable
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  # Support swagger3
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  # Session configuration
+  session:
+    # Enable distributed session with Redis if SPRING_SESSION_STORE_TYPE is set
+    store-type: ${SPRING_SESSION_STORE_TYPE:none}
+    # 30 days expiration
+    timeout: 2592000
+  # Database configuration
+  # Overridden by environment variables
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/my_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:20040812}
+  # Redis configuration
+  # Overridden by environment variables
+  redis:
+    database: ${SPRING_REDIS_DATABASE:1}
+    host: ${SPRING_REDIS_HOST:localhost}
+    port: ${SPRING_REDIS_PORT:6379}
+    timeout: ${SPRING_REDIS_TIMEOUT:5000}
+    password: ${SPRING_REDIS_PASSWORD:}
+  # Elasticsearch configuration
+  # Overridden by environment variables if needed
+  elasticsearch:
+    uris: ${SPRING_ELASTICSEARCH_URIS:http://localhost:9200}
+    username: ${SPRING_ELASTICSEARCH_USERNAME:root}
+    password: ${SPRING_ELASTICSEARCH_PASSWORD:123456}
+  # File upload
+  servlet:
+    multipart:
+      # Size limit
+      max-file-size: ${SPRING_MULTIPART_MAX_FILE_SIZE:10MB}
+server:
+  address: 0.0.0.0
+  port: ${SERVER_PORT:8101}
+  servlet:
+    context-path: ${SERVER_CONTEXT_PATH:/api}
+    # Cookie 30 days expiration
+    session:
+      cookie:
+        max-age: 2592000
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: false
+    # Logging implementation - use Slf4jImpl in production, StdOutImpl in dev
+    log-impl: ${MYBATIS_LOG_IMPL:org.apache.ibatis.logging.stdout.StdOutImpl}
+  global-config:
+    db-config:
+      logic-delete-field: isDelete # Global logical delete entity field name
+      logic-delete-value: 1 # Logical deleted value (default is 1)
+      logic-not-delete-value: 0 # Logical not deleted value (default is 0)
+# WeChat related
+wx:
+  # WeChat Official Account Platform
+  mp:
+    token: ${WX_MP_TOKEN:xxx}
+    aesKey: ${WX_MP_AES_KEY:xxx}
+    appId: ${WX_MP_APP_ID:xxx}
+    secret: ${WX_MP_SECRET:xxx}
+    config-storage:
+      http-client-type: HttpClient
+      key-prefix: wx
+      redis:
+        host: ${SPRING_REDIS_HOST:redis}
+        port: ${SPRING_REDIS_PORT:6379}
+      type: ${WX_CONFIG_STORAGE_TYPE:Memory}
+  # WeChat Open Platform
+  open:
+    appId: ${WX_OPEN_APP_ID:xxx}
+    appSecret: ${WX_OPEN_APP_SECRET:xxx}
+# AWS S3 object storage (or MinIO for development)
+# Overridden by environment variables
+aws:
+  s3:
+    accessKey: ${AWS_S3_ACCESS_KEY:xxx}
+    secretKey: ${AWS_S3_SECRET_KEY:xxx}
+    region: ${AWS_S3_REGION:us-east-2}
+    bucket: ${AWS_S3_BUCKET:labos}
+    # Endpoint is optional - if not set, uses AWS S3 region-based endpoints
+    endpoint: ${AWS_S3_ENDPOINT:}
+    # Public endpoint for presigned URLs (only used with local MinIO)
+    publicEndpoint: ${AWS_S3_PUBLIC_ENDPOINT:}
+# API documentation configuration
+knife4j:
+  enable: ${KNIFE4J_ENABLE:true}
+  openapi:
+    title: "API Documentation"
+    version: 1.0
+    group:
+      default:
+        api-rule: package
+        api-rule-resources:
+          - com.labOS.backend.controller
+

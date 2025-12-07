@@ -326,11 +326,15 @@ public class S3Manager {
      *
      * @param key            object key
      * @param expirationTime expiration time in milliseconds
-     * @return presigned URL
+     * @return presigned URL (using public endpoint if USE_LOCAL_MINIO is set)
      */
     public String generatePresignedUrl(String key, long expirationTime) {
         Date expiration = new Date(System.currentTimeMillis() + expirationTime);
-        URL url = amazonS3.generatePresignedUrl(s3ClientConfig.getBucket(), key, expiration);
+        
+        // Use public endpoint client if configured for local MinIO
+        AmazonS3 client = s3ClientConfig.createPresignedUrlClient();
+        URL url = client.generatePresignedUrl(s3ClientConfig.getBucket(), key, expiration);
+        
         return url.toString();
     }
 
@@ -339,14 +343,18 @@ public class S3Manager {
      *
      * @param key            object key (full path including folder and filename)
      * @param expirationTime expiration time in milliseconds
-     * @return presigned URL for upload
+     * @return presigned URL for upload (using public endpoint if USE_LOCAL_MINIO is set)
      */
     public String generatePresignedUploadUrl(String key, long expirationTime) {
         Date expiration = new Date(System.currentTimeMillis() + expirationTime);
         GeneratePresignedUrlRequest generatePresignedUrlRequest = new GeneratePresignedUrlRequest(
                 s3ClientConfig.getBucket(), key, HttpMethod.PUT);
         generatePresignedUrlRequest.setExpiration(expiration);
-        URL url = amazonS3.generatePresignedUrl(generatePresignedUrlRequest);
+        
+        // Use public endpoint client if configured for local MinIO
+        AmazonS3 client = s3ClientConfig.createPresignedUrlClient();
+        URL url = client.generatePresignedUrl(generatePresignedUrlRequest);
+        
         return url.toString();
     }
 
