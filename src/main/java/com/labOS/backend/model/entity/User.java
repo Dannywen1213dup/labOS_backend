@@ -81,6 +81,11 @@ public class User implements Serializable {
     private String userAvatar;
 
     /**
+     * User avatar S3 key (for deletion / replacement)
+     */
+    private String userAvatarKey;
+
+    /**
      * User profile
      */
     private String userProfile;

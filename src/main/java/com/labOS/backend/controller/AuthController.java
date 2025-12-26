@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.util.DigestUtils;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -270,6 +271,29 @@ public class AuthController {
 
         log.info("User registered and logged in successfully: email={}, userId={}", email, user.getId());
         return ResultUtils.success(response);
+    }
+
+    /**
+     * Get current user info using Sa-Token
+     *
+     * @return Current logged-in user profile
+     */
+    @GetMapping("/user-info")
+    public BaseResponse<LoginUserVO> getUserInfo() {
+        if (!StpUtil.isLogin()) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "User is not logged in");
+        }
+
+        LoginUserVO loginUserVO = SaTokenUtil.getUser();
+        if (loginUserVO == null) {
+            Long loginId = StpUtil.getLoginIdAsLong();
+            User user = userService.getById(loginId);
+            ThrowUtils.throwIf(user == null, ErrorCode.NOT_FOUND_ERROR, "User not found");
+            loginUserVO = userService.getLoginUserVO(user);
+            SaTokenUtil.setUser(loginUserVO);
+        }
+
+        return ResultUtils.success(loginUserVO);
     }
 
     /**

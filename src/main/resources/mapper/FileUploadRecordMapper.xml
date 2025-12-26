@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.labOS.backend.mapper.FileUploadRecordMapper">
+
+    <resultMap id="BaseResultMap" type="com.labOS.backend.model.entity.FileUploadRecord">
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="batchId" column="batchId" jdbcType="VARCHAR"/>
+        <result property="userId" column="userId" jdbcType="BIGINT"/>
+        <result property="originalFileName" column="originalFileName" jdbcType="VARCHAR"/>
+        <result property="sanitizedFileName" column="sanitizedFileName" jdbcType="VARCHAR"/>
+        <result property="s3Key" column="s3Key" jdbcType="VARCHAR"/>
+        <result property="s3Bucket" column="s3Bucket" jdbcType="VARCHAR"/>
+        <result property="fileSize" column="fileSize" jdbcType="BIGINT"/>
+        <result property="contentType" column="contentType" jdbcType="VARCHAR"/>
+        <result property="presignedUrl" column="presignedUrl" jdbcType="VARCHAR"/>
+        <result property="uploadStatus" column="uploadStatus" jdbcType="VARCHAR"/>
+        <result property="uploadMethod" column="uploadMethod" jdbcType="VARCHAR"/>
+        <result property="errorMessage" column="errorMessage" jdbcType="VARCHAR"/>
+        <result property="errorCode" column="errorCode" jdbcType="VARCHAR"/>
+        <result property="httpStatusCode" column="httpStatusCode" jdbcType="INTEGER"/>
+        <result property="retryCount" column="retryCount" jdbcType="INTEGER"/>
+        <result property="urlExpirationTime" column="urlExpirationTime" jdbcType="TIMESTAMP"/>
+        <result property="requestTime" column="requestTime" jdbcType="TIMESTAMP"/>
+        <result property="uploadStartTime" column="uploadStartTime" jdbcType="TIMESTAMP"/>
+        <result property="uploadCompletionTime" column="uploadCompletionTime" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+        <result property="clientTimezone" column="clientTimezone" jdbcType="VARCHAR"/>
+        <result property="metadata" column="metadata" jdbcType="VARCHAR"/>
+        <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,batchId,userId,
+        originalFileName,sanitizedFileName,s3Key,
+        s3Bucket,fileSize,contentType,
+        presignedUrl,uploadStatus,uploadMethod,
+        errorMessage,errorCode,httpStatusCode,
+        retryCount,urlExpirationTime,requestTime,
+        uploadStartTime,uploadCompletionTime,updateTime,
+        clientTimezone,metadata,isDelete
+    </sql>
+</mapper>
+

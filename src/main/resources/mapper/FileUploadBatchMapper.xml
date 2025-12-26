@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.labOS.backend.mapper.FileUploadBatchMapper">
+
+    <resultMap id="BaseResultMap" type="com.labOS.backend.model.entity.FileUploadBatch">
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="batchId" column="batchId" jdbcType="VARCHAR"/>
+        <result property="userId" column="userId" jdbcType="BIGINT"/>
+        <result property="userEmail" column="userEmail" jdbcType="VARCHAR"/>
+        <result property="userName" column="userName" jdbcType="VARCHAR"/>
+        <result property="userRole" column="userRole" jdbcType="VARCHAR"/>
+        <result property="folderType" column="folderType" jdbcType="VARCHAR"/>
+        <result property="folderPath" column="folderPath" jdbcType="VARCHAR"/>
+        <result property="totalFiles" column="totalFiles" jdbcType="INTEGER"/>
+        <result property="successfulFiles" column="successfulFiles" jdbcType="INTEGER"/>
+        <result property="failedFiles" column="failedFiles" jdbcType="INTEGER"/>
+        <result property="pendingFiles" column="pendingFiles" jdbcType="INTEGER"/>
+        <result property="batchStatus" column="batchStatus" jdbcType="VARCHAR"/>
+        <result property="expirationTime" column="expirationTime" jdbcType="BIGINT"/>
+        <result property="requestTimezone" column="requestTimezone" jdbcType="VARCHAR"/>
+        <result property="requestIp" column="requestIp" jdbcType="VARCHAR"/>
+        <result property="userAgent" column="userAgent" jdbcType="VARCHAR"/>
+        <result property="notes" column="notes" jdbcType="VARCHAR"/>
+        <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+        <result property="completionTime" column="completionTime" jdbcType="TIMESTAMP"/>
+        <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,batchId,userId,
+        userEmail,userName,userRole,
+        folderType,folderPath,totalFiles,
+        successfulFiles,failedFiles,pendingFiles,
+        batchStatus,expirationTime,requestTimezone,
+        requestIp,userAgent,notes,
+        createTime,updateTime,completionTime,
+        isDelete
+    </sql>
+</mapper>
+

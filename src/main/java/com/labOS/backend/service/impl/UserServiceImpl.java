@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.labOS.backend.common.ErrorCode;
 import com.labOS.backend.constant.CommonConstant;
 import com.labOS.backend.exception.BusinessException;
+import com.labOS.backend.manager.S3Manager;
 import com.labOS.backend.mapper.UserMapper;
 import com.labOS.backend.model.dto.user.UserQueryRequest;
 import com.labOS.backend.model.entity.User;
@@ -16,8 +17,14 @@ import com.labOS.backend.model.vo.LoginUserVO;
 import com.labOS.backend.model.vo.UserVO;
 import com.labOS.backend.service.UserService;
 import com.labOS.backend.utils.SqlUtils;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import cn.dev33.satoken.stp.StpUtil;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +32,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.annotation.Resource;
 
 /**
  * User service implementation
@@ -35,6 +45,11 @@ import org.springframework.util.DigestUtils;
 @Service
 @Slf4j
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
+
+    private static final long MAX_AVATAR_SIZE_BYTES = 5L * 1024 * 1024;
+
+    @Resource
+    private S3Manager s3Manager;
 
     /**
      * Salt value for password obfuscation
@@ -236,5 +251,180 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
                 sortField);
         return queryWrapper;
+    }
+
+    @Override
+    public boolean updateUserName(Long userId, String firstName, String lastName) {
+        if (userId == null || userId <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Invalid userId");
+        }
+        String fn = firstName == null ? null : firstName.trim();
+        String ln = lastName == null ? null : lastName.trim();
+        if (StringUtils.isBlank(fn) && StringUtils.isBlank(ln)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "First name or last name is required");
+        }
+        if (StringUtils.isNotBlank(fn) && fn.length() > 50) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "First name too long");
+        }
+        if (StringUtils.isNotBlank(ln) && ln.length() > 50) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Last name too long");
+        }
+
+        // Fill missing parts from DB, and keep userName consistent with (firstName + lastName)
+        User dbUser = this.getById(userId);
+        if (dbUser == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "User not found");
+        }
+
+        String finalFirstName = StringUtils.isBlank(fn) ? dbUser.getFirstName() : fn;
+        String finalLastName = StringUtils.isBlank(ln) ? dbUser.getLastName() : ln;
+        String combinedUserName = ((finalFirstName == null ? "" : finalFirstName.trim()) + " " +
+                (finalLastName == null ? "" : finalLastName.trim())).trim();
+
+        User update = new User();
+        update.setId(userId);
+        update.setFirstName(finalFirstName);
+        update.setLastName(finalLastName);
+        if (StringUtils.isNotBlank(combinedUserName)) {
+            update.setUserName(combinedUserName);
+        }
+        return this.updateById(update);
+    }
+
+    @Override
+    public boolean changePassword(Long userId, String oldPassword, String newPassword, String confirmPassword) {
+        if (userId == null || userId <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Invalid userId");
+        }
+        if (StringUtils.isAnyBlank(oldPassword, newPassword, confirmPassword)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Passwords cannot be empty");
+        }
+        if (newPassword.length() < 8) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "New password too short");
+        }
+        if (!newPassword.equals(confirmPassword)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Passwords do not match");
+        }
+
+        User dbUser = this.getById(userId);
+        if (dbUser == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "User not found");
+        }
+
+        String oldEncrypted = DigestUtils.md5DigestAsHex((SALT + oldPassword).getBytes());
+        if (!oldEncrypted.equals(dbUser.getUserPassword())) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Old password is incorrect");
+        }
+
+        String newEncrypted = DigestUtils.md5DigestAsHex((SALT + newPassword).getBytes());
+        User update = new User();
+        update.setId(userId);
+        update.setUserPassword(newEncrypted);
+        boolean ok = this.updateById(update);
+        if (ok) {
+            // Security: force logout all sessions for this user
+            try {
+                StpUtil.logout(userId);
+            } catch (Exception e) {
+                log.warn("Failed to logout user sessions after password change, userId={}", userId, e);
+            }
+        }
+        return ok;
+    }
+
+    @Override
+    public String updateUserAvatar(Long userId, MultipartFile avatarFile) {
+        if (userId == null || userId <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Invalid userId");
+        }
+        if (avatarFile == null || avatarFile.isEmpty()) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Avatar file is required");
+        }
+        if (avatarFile.getSize() > MAX_AVATAR_SIZE_BYTES) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Avatar file is too large (max 5MB)");
+        }
+
+        String contentType = avatarFile.getContentType();
+        if (StringUtils.isBlank(contentType) || !contentType.toLowerCase().startsWith("image/")) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Avatar file must be an image");
+        }
+
+        User dbUser = this.getById(userId);
+        if (dbUser == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "User not found");
+        }
+
+        String oldAvatarKey = dbUser.getUserAvatarKey();
+
+        // Build S3 key: labOS/UserAvatar/{userId}/avatar_{timestamp}_{uuid}.ext
+        String folderPath = s3Manager.getOrCreateUserAvatarFolder(String.valueOf(userId));
+
+        String originalName = avatarFile.getOriginalFilename();
+        String safeName = s3Manager.sanitizeFileName(StringUtils.defaultIfBlank(originalName, "avatar"));
+        String ext = "";
+        int dot = safeName.lastIndexOf('.');
+        if (dot >= 0 && dot < safeName.length() - 1) {
+            ext = safeName.substring(dot); // keep extension
+        } else {
+            // fallback based on content-type
+            if (contentType.toLowerCase().contains("png")) {
+                ext = ".png";
+            } else if (contentType.toLowerCase().contains("jpeg") || contentType.toLowerCase().contains("jpg")) {
+                ext = ".jpg";
+            } else if (contentType.toLowerCase().contains("webp")) {
+                ext = ".webp";
+            } else if (contentType.toLowerCase().contains("gif")) {
+                ext = ".gif";
+            } else {
+                ext = ".img";
+            }
+        }
+
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+        String uuid = UUID.randomUUID().toString().replace("-", "");
+        String newFileName = "avatar_" + timestamp + "_" + uuid + ext;
+        String newAvatarKey = folderPath + newFileName;
+
+        // Upload to S3
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentLength(avatarFile.getSize());
+        metadata.setContentType(contentType);
+
+        try (InputStream is = avatarFile.getInputStream()) {
+            s3Manager.putObject(newAvatarKey, is, metadata);
+        } catch (Exception e) {
+            log.error("Failed to upload avatar to S3, userId={}, key={}", userId, newAvatarKey, e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "Avatar upload failed");
+        }
+
+        // Permanent URL (served by backend to avoid S3 public ACL / AccessDenied issues)
+        String permanentUrl = "/user/avatar/view/" + userId + "?v=" + timestamp;
+
+        // Update DB first (so user always points to a valid uploaded avatar)
+        User update = new User();
+        update.setId(userId);
+        update.setUserAvatar(permanentUrl);
+        update.setUserAvatarKey(newAvatarKey);
+        boolean ok = this.updateById(update);
+        if (!ok) {
+            // Rollback new object best-effort if DB update fails
+            try {
+                s3Manager.deleteObject(newAvatarKey);
+            } catch (Exception ex) {
+                log.warn("Failed to rollback uploaded avatar after DB update failure, key={}", newAvatarKey, ex);
+            }
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "Failed to update user avatar");
+        }
+
+        // Delete previous avatar object after successful upload+DB update (best-effort)
+        if (StringUtils.isNotBlank(oldAvatarKey) && !oldAvatarKey.equals(newAvatarKey)) {
+            try {
+                s3Manager.deleteObject(oldAvatarKey);
+            } catch (Exception e) {
+                log.warn("Failed to delete previous avatar from S3, oldKey={}", oldAvatarKey, e);
+            }
+        }
+
+        return permanentUrl;
     }
 }

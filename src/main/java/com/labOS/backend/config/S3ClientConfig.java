@@ -59,6 +59,15 @@ public class S3ClientConfig {
 
     @Bean
     public AmazonS3 amazonS3Client() {
+        // Log configuration for debugging (mask sensitive data)
+        System.out.println("=== S3 Configuration Loaded ===");
+        System.out.println("Access Key: " + (StringUtils.isNotBlank(accessKey) ? accessKey.substring(0, Math.min(10, accessKey.length())) + "..." : "NOT SET"));
+        System.out.println("Secret Key: " + (StringUtils.isNotBlank(secretKey) ? "***SET***" : "NOT SET"));
+        System.out.println("Region: " + region);
+        System.out.println("Bucket: " + bucket);
+        System.out.println("Endpoint: " + (StringUtils.isNotBlank(endpoint) ? endpoint : "NOT SET (using AWS)"));
+        System.out.println("==============================");
+        
         // Validate configuration
         if (StringUtils.isBlank(accessKey) || StringUtils.isBlank(secretKey)) {
             throw new IllegalStateException("AWS S3 access key and secret key must be configured");

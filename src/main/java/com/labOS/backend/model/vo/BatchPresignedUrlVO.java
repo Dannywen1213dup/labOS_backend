@@ -18,6 +18,11 @@ import java.util.List;
 public class BatchPresignedUrlVO implements Serializable {
 
     /**
+     * Batch ID for tracking this upload batch
+     */
+    private String batchId;
+
+    /**
      * List of presigned URL entries
      * Each entry contains the original file name and its presigned URL
      */

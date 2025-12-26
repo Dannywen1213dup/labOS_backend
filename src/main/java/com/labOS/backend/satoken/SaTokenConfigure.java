@@ -11,11 +11,14 @@ import com.labOS.backend.common.ErrorCode;
 import com.labOS.backend.common.ResultUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Sa-Token 配置类
@@ -31,16 +34,28 @@ public class SaTokenConfigure {
     @Autowired(required = false)
     private V2Config v2Config;
 
+    @Value("${cors.allowed-origins:https://ai4labos.com,https://www.ai4labos.com,http://localhost:8080,http://localhost:5173,http://localhost:3000}")
+    private String allowedOrigins;
+
+    @Value("${cors.enable-all-origins:false}")
+    private boolean enableAllOrigins;
+
     /** 开放权限的URL路径 - 无需登录即可访问 */
     private final String[] excludePaths = {
             // 静态资源
             "/favicon.ico", 
             "/static/**",
+            "/api/favicon.ico",
+            "/api/static/**",
             
             // 认证相关接口（登录、注册）
             // 注意：由于 context-path 是 /api，需要同时配置两种路径
             "/api/auth/**",
             "/auth/**",
+            // 兼容网关/版本前缀场景（例如 /api/v1/auth/**）
+            "/api/**/auth/**",
+            // 兜底：如果路径被反向代理做了额外前缀，也保证 auth 相关接口不被拦截
+            "/**/auth/**",
             
             // Swagger API 文档
             "/swagger-resources/**",
@@ -50,16 +65,28 @@ public class SaTokenConfigure {
             "/swagger-ui.html",
             "/swagger-ui/**",
             "/doc.html",
+            // context-path = /api 的情况
+            "/api/swagger-resources/**",
+            "/api/webjars/**",
+            "/api/v2/**",
+            "/api/v3/**",
+            "/api/swagger-ui.html",
+            "/api/swagger-ui/**",
+            "/api/doc.html",
             
             // 健康检查
             "/actuator/**",
+            "/api/actuator/**",
             
             // 前端静态页面
             "/", 
             "/index.html",
+            "/api/",
+            "/api/index.html",
             
             // Druid 监控（生产环境建议关闭或加权限）
-            "/druid/**"
+            "/druid/**",
+            "/api/druid/**"
     };
 
     /**
@@ -141,11 +168,7 @@ public class SaTokenConfigure {
                     log.info("=== Incoming Request === Method: {}, Path: {}", method, path);
                     
                     // 设置跨域响应头
-                    SaHolder.getResponse()
-                            .setHeader("Access-Control-Allow-Origin", "*")
-                            .setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-                            .setHeader("Access-Control-Allow-Headers", "Content-Type, satoken, Authorization")
-                            .setHeader("Access-Control-Max-Age", "3600");
+                    applyCorsHeaders();
                     
                     // OPTIONS 预检请求直接放行
                     if ("OPTIONS".equals(method)) {
@@ -153,5 +176,42 @@ public class SaTokenConfigure {
                         SaRouter.back();
                     }
                 });
+    }
+
+    private void applyCorsHeaders() {
+        String origin = SaHolder.getRequest().getHeader("Origin");
+        String requestHeaders = SaHolder.getRequest().getHeader("Access-Control-Request-Headers");
+        String requestMethod = SaHolder.getRequest().getHeader("Access-Control-Request-Method");
+
+        // No Origin header (e.g., ALB health check) -> skip CORS headers
+        if (origin == null || origin.trim().isEmpty()) {
+            return;
+        }
+
+        if (!enableAllOrigins && !isAllowedOrigin(origin)) {
+            // Not allowed -> do not echo back origin
+            return;
+        }
+
+        // IMPORTANT: when allowCredentials=true, Allow-Origin cannot be "*"
+        SaHolder.getResponse()
+                .setHeader("Access-Control-Allow-Origin", origin)
+                .setHeader("Vary", "Origin, Access-Control-Request-Method, Access-Control-Request-Headers")
+                .setHeader("Access-Control-Allow-Credentials", "true")
+                .setHeader("Access-Control-Allow-Methods", requestMethod != null ? requestMethod : "GET, POST, PUT, DELETE, OPTIONS")
+                .setHeader("Access-Control-Allow-Headers", requestHeaders != null ? requestHeaders : "Content-Type, satoken, Authorization, X-Requested-With")
+                .setHeader("Access-Control-Expose-Headers", "*")
+                .setHeader("Access-Control-Max-Age", "3600");
+    }
+
+    private boolean isAllowedOrigin(String origin) {
+        if (allowedOrigins == null || allowedOrigins.trim().isEmpty()) {
+            return false;
+        }
+        List<String> origins = Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
+        return origins.contains(origin);
     }
 }

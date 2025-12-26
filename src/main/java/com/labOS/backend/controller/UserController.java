@@ -10,30 +10,31 @@ import com.labOS.backend.constant.UserConstant;
 import com.labOS.backend.exception.BusinessException;
 import com.labOS.backend.exception.ThrowUtils;
 import com.labOS.backend.model.dto.user.UserAddRequest;
-import com.labOS.backend.model.dto.user.UserLoginRequest;
+import com.labOS.backend.model.dto.user.UserChangePasswordRequest;
 import com.labOS.backend.model.dto.user.UserQueryRequest;
-import com.labOS.backend.model.dto.user.UserRegisterRequest;
+import com.labOS.backend.model.dto.user.UserUpdateNameRequest;
 import com.labOS.backend.model.dto.user.UserUpdateMyRequest;
 import com.labOS.backend.model.dto.user.UserUpdateRequest;
 import com.labOS.backend.model.entity.User;
 import com.labOS.backend.model.vo.LoginUserVO;
 import com.labOS.backend.model.vo.UserVO;
+import com.labOS.backend.satoken.SaTokenUtil;
 import com.labOS.backend.service.UserService;
 
 import java.util.List;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.util.DigestUtils;
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 
 import static com.labOS.backend.service.impl.UserServiceImpl.SALT;
@@ -231,5 +232,58 @@ public class UserController {
         boolean result = userService.updateById(user);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
+    }
+
+    /**
+     * Update first name and last name (logged-in user)
+     *
+     * @param updateNameRequest request containing firstName and lastName
+     * @return success
+     */
+    @PostMapping("/update/name")
+    public BaseResponse<Boolean> updateName(@RequestBody UserUpdateNameRequest updateNameRequest) {
+        if (updateNameRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Request cannot be null");
+        }
+        SaTokenUtil.checkLogin();
+        Long userId = SaTokenUtil.getUserId();
+        boolean ok = userService.updateUserName(userId, updateNameRequest.getFirstName(), updateNameRequest.getLastName());
+        ThrowUtils.throwIf(!ok, ErrorCode.OPERATION_ERROR, "Failed to update name");
+        return ResultUtils.success(true);
+    }
+
+    /**
+     * Change password (logged-in user)
+     *
+     * @param request change password request
+     * @return success
+     */
+    @PostMapping("/update/password")
+    public BaseResponse<Boolean> changePassword(@RequestBody UserChangePasswordRequest request) {
+        if (request == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Request cannot be null");
+        }
+        SaTokenUtil.checkLogin();
+        Long userId = SaTokenUtil.getUserId();
+        boolean ok = userService.changePassword(userId, request.getOldPassword(), request.getNewPassword(), request.getConfirmPassword());
+        ThrowUtils.throwIf(!ok, ErrorCode.OPERATION_ERROR, "Failed to change password");
+        return ResultUtils.success(true);
+    }
+
+    /**
+     * Upload & replace user avatar
+     *
+     * Upload image to S3 under: labOS/UserAvatar/{userId}/...
+     * Then update user.userAvatar (permanent URL) and delete previous avatar object in S3.
+     *
+     * @param file avatar image file
+     * @return permanent URL of the new avatar
+     */
+    @PostMapping(value = "/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public BaseResponse<String> updateAvatar(@RequestPart("file") MultipartFile file) {
+        SaTokenUtil.checkLogin();
+        Long userId = SaTokenUtil.getUserId();
+        String url = userService.updateUserAvatar(userId, file);
+        return ResultUtils.success(url);
     }
 }

@@ -11,6 +11,7 @@
         <result property="mpOpenId" column="mpOpenId" jdbcType="VARCHAR"/>
         <result property="userName" column="userName" jdbcType="VARCHAR"/>
         <result property="userAvatar" column="userAvatar" jdbcType="VARCHAR"/>
+        <result property="userAvatarKey" column="userAvatarKey" jdbcType="VARCHAR"/>
         <result property="userProfile" column="userProfile" jdbcType="VARCHAR"/>
         <result property="userRole" column="userRole" jdbcType="VARCHAR"/>
         <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
@@ -20,7 +21,7 @@
 
     <sql id="Base_Column_List">
         id,unionId,mpOpenId,
-        userName,userAvatar,userProfile,
+        userName,userAvatar,userAvatarKey,userProfile,
         userRole,createTime,updateTime,isDelete
     </sql>
 </mapper>

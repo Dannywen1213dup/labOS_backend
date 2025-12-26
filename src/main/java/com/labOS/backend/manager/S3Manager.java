@@ -35,6 +35,7 @@ public class S3Manager {
     private AmazonS3 amazonS3;
 
     private static final String PROJECT_PREFIX = "labOS";
+    private static final String USER_AVATAR_FOLDER = "UserAvatar";
 
     // Safe characters pattern: alphanumeric, space, underscore, dot, asterisk, single quote, parentheses, dash, forward slash
     private static final Pattern SAFE_CHARACTERS = Pattern.compile("[^0-9a-zA-Z! _\\.\\*'\\(\\)\\-\\/]");
@@ -157,6 +158,61 @@ public class S3Manager {
             log.info("Created benchmark-eval folder: {}", folderPath);
         }
         return folderPath;
+    }
+
+    /**
+     * Get or create user avatar folder for user
+     * Folder structure: labOS/UserAvatar/{userId}/
+     *
+     * @param userId user ID
+     * @return complete folder path
+     */
+    public String getOrCreateUserAvatarFolder(String userId) {
+        String folderPath = PROJECT_PREFIX + "/" + USER_AVATAR_FOLDER + "/" + userId + "/";
+        if (!doesFolderExist(folderPath)) {
+            createFolder(folderPath);
+            log.info("Created user avatar folder: {}", folderPath);
+        }
+        return folderPath;
+    }
+
+    /**
+     * Delete a single object
+     *
+     * @param key object key
+     */
+    public void deleteObject(String key) {
+        if (StringUtils.isBlank(key)) {
+            return;
+        }
+        amazonS3.deleteObject(s3ClientConfig.getBucket(), key);
+        log.info("Deleted object: {}", key);
+    }
+
+    /**
+     * Get permanent (non-expiring) URL for an object.
+     * Note: This assumes the bucket/object is accessible from the public endpoint (or via gateway).
+     *
+     * @param key object key
+     * @return permanent URL
+     */
+    public String getPermanentUrl(String key) {
+        AmazonS3 client = s3ClientConfig.createPresignedUrlClient();
+        URL url = client.getUrl(s3ClientConfig.getBucket(), key);
+        return url.toString();
+    }
+
+    /**
+     * Get object from S3
+     *
+     * @param key object key
+     * @return S3Object
+     */
+    public S3Object getObject(String key) {
+        if (StringUtils.isBlank(key)) {
+            throw new IllegalArgumentException("S3 key cannot be blank");
+        }
+        return amazonS3.getObject(s3ClientConfig.getBucket(), key);
     }
 
     /**

@@ -33,6 +33,15 @@ public class BatchPresignedUrlRequest implements Serializable {
      */
     private Long expirationTime;
 
+    /**
+     * Client timezone (optional)
+     * 
+     * The timezone of the client making the request (e.g., "America/New_York", "UTC")
+     * Used for tracking and logging purposes.
+     * Default: "UTC"
+     */
+    private String clientTimezone;
+
     private static final long serialVersionUID = 1L;
 }
 
