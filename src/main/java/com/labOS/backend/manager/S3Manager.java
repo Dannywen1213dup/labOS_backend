@@ -11,12 +11,17 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.io.*;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  * S3 Object Storage Operations
@@ -111,6 +116,18 @@ public class S3Manager {
         return !result.getObjectSummaries().isEmpty();
     }
 
+    public boolean doesFolderExist(String bucket, String folderPath) {
+        if (!folderPath.endsWith("/")) {
+            folderPath = folderPath + "/";
+        }
+        ListObjectsV2Request request = new ListObjectsV2Request()
+                .withBucketName(bucket)
+                .withPrefix(folderPath)
+                .withMaxKeys(1);
+        ListObjectsV2Result result = amazonS3.listObjectsV2(request);
+        return !result.getObjectSummaries().isEmpty();
+    }
+
     /**
      * Create folder (by creating an empty object)
      *
@@ -126,6 +143,18 @@ public class S3Manager {
         PutObjectRequest putObjectRequest = new PutObjectRequest(s3ClientConfig.getBucket(), folderPath, emptyContent, metadata);
         amazonS3.putObject(putObjectRequest);
         log.info("Created folder: {}", folderPath);
+    }
+
+    public void createFolder(String bucket, String folderPath) {
+        if (!folderPath.endsWith("/")) {
+            folderPath = folderPath + "/";
+        }
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentLength(0);
+        InputStream emptyContent = new ByteArrayInputStream(new byte[0]);
+        PutObjectRequest putObjectRequest = new PutObjectRequest(bucket, folderPath, emptyContent, metadata);
+        amazonS3.putObject(putObjectRequest);
+        log.info("Created folder in {}: {}", bucket, folderPath);
     }
 
     /**
@@ -169,8 +198,9 @@ public class S3Manager {
      */
     public String getOrCreateUserAvatarFolder(String userId) {
         String folderPath = PROJECT_PREFIX + "/" + USER_AVATAR_FOLDER + "/" + userId + "/";
-        if (!doesFolderExist(folderPath)) {
-            createFolder(folderPath);
+        String avatarBucket = getAvatarBucket();
+        if (!doesFolderExist(avatarBucket, folderPath)) {
+            createFolder(avatarBucket, folderPath);
             log.info("Created user avatar folder: {}", folderPath);
         }
         return folderPath;
@@ -189,6 +219,14 @@ public class S3Manager {
         log.info("Deleted object: {}", key);
     }
 
+    public void deleteObject(String bucket, String key) {
+        if (StringUtils.isBlank(key)) {
+            return;
+        }
+        amazonS3.deleteObject(bucket, key);
+        log.info("Deleted object in {}: {}", bucket, key);
+    }
+
     /**
      * Get permanent (non-expiring) URL for an object.
      * Note: This assumes the bucket/object is accessible from the public endpoint (or via gateway).
@@ -203,6 +241,21 @@ public class S3Manager {
     }
 
     /**
+     * Get CloudFront URL for an object.
+     *
+     * @param key object key
+     * @return CloudFront URL
+     */
+    public String getCloudFrontUrl(String key) {
+        String domain = s3ClientConfig.getCloudfrontDomain();
+        if (StringUtils.isBlank(domain)) {
+            throw new IllegalStateException("CloudFront domain is not configured");
+        }
+        String normalized = domain.endsWith("/") ? domain : domain + "/";
+        return normalized + key;
+    }
+
+    /**
      * Get object from S3
      *
      * @param key object key
@@ -213,6 +266,26 @@ public class S3Manager {
             throw new IllegalArgumentException("S3 key cannot be blank");
         }
         return amazonS3.getObject(s3ClientConfig.getBucket(), key);
+    }
+
+    /**
+     * Get object metadata from S3
+     *
+     * @param key object key
+     * @return ObjectMetadata
+     */
+    public ObjectMetadata getObjectMetadata(String key) {
+        if (StringUtils.isBlank(key)) {
+            throw new IllegalArgumentException("S3 key cannot be blank");
+        }
+        return amazonS3.getObjectMetadata(s3ClientConfig.getBucket(), key);
+    }
+
+    public ObjectMetadata getObjectMetadata(String bucket, String key) {
+        if (StringUtils.isBlank(key)) {
+            throw new IllegalArgumentException("S3 key cannot be blank");
+        }
+        return amazonS3.getObjectMetadata(bucket, key);
     }
 
     /**
@@ -412,6 +485,126 @@ public class S3Manager {
         URL url = client.generatePresignedUrl(generatePresignedUrlRequest);
         
         return url.toString();
+    }
+
+    /**
+     * Generate presigned POST form fields with content-length restriction
+     *
+     * @param key object key
+     * @param contentType content type (e.g., image/png)
+     * @param maxBytes max allowed size in bytes
+     * @param expirationTime expiration time in milliseconds
+     * @return form fields for POST upload
+     */
+    public Map<String, String> generatePresignedPostFields(String key, String contentType, long maxBytes, long expirationTime) {
+        return generatePresignedPostFields(s3ClientConfig.getBucket(), key, contentType, maxBytes, expirationTime);
+    }
+
+    public Map<String, String> generatePresignedPostFields(String bucket, String key, String contentType, long maxBytes, long expirationTime) {
+        if (StringUtils.isBlank(key) || StringUtils.isBlank(contentType)) {
+            throw new IllegalArgumentException("key and contentType are required");
+        }
+        if (maxBytes <= 0) {
+            throw new IllegalArgumentException("maxBytes must be positive");
+        }
+
+        String accessKey = s3ClientConfig.getAccessKey();
+        String secretKey = s3ClientConfig.getSecretKey();
+        String region = s3ClientConfig.getRegion();
+        String bucketName = bucket;
+
+        ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
+        String amzDate = now.format(DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'"));
+        String dateStamp = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String credential = accessKey + "/" + dateStamp + "/" + region + "/s3/aws4_request";
+
+        ZonedDateTime expiresAt = now.plusNanos(expirationTime * 1_000_000L);
+        String expiration = expiresAt.format(DateTimeFormatter.ISO_INSTANT);
+
+        String policy = "{\"expiration\":\"" + expiration + "\",\"conditions\":["
+                + "{\"bucket\":\"" + bucketName + "\"},"
+                + "{\"key\":\"" + key + "\"},"
+                + "{\"Content-Type\":\"" + contentType + "\"},"
+                + "[\"content-length-range\",1," + maxBytes + "],"
+                + "{\"x-amz-algorithm\":\"AWS4-HMAC-SHA256\"},"
+                + "{\"x-amz-credential\":\"" + credential + "\"},"
+                + "{\"x-amz-date\":\"" + amzDate + "\"}"
+                + "]}";
+
+        String policyBase64 = Base64.getEncoder().encodeToString(policy.getBytes(StandardCharsets.UTF_8));
+        byte[] signingKey = getSignatureKey(secretKey, dateStamp, region, "s3");
+        String signature = bytesToHex(hmacSha256(signingKey, policyBase64));
+
+        Map<String, String> fields = new HashMap<>();
+        fields.put("key", key);
+        fields.put("Content-Type", contentType);
+        fields.put("x-amz-algorithm", "AWS4-HMAC-SHA256");
+        fields.put("x-amz-credential", credential);
+        fields.put("x-amz-date", amzDate);
+        fields.put("policy", policyBase64);
+        fields.put("x-amz-signature", signature);
+        return fields;
+    }
+
+    /**
+     * Get POST upload URL for presigned form upload
+     *
+     * @return upload URL
+     */
+    public String getPresignedPostUrl() {
+        return getPresignedPostUrl(s3ClientConfig.getBucket());
+    }
+
+    public String getPresignedPostUrl(String bucket) {
+        String region = s3ClientConfig.getRegion();
+        String endpoint = s3ClientConfig.getEndpoint();
+        String publicEndpoint = s3ClientConfig.getPublicEndpoint();
+        String useLocalMinIO = System.getenv("USE_LOCAL_MINIO");
+
+        String base;
+        if ("true".equalsIgnoreCase(useLocalMinIO) && StringUtils.isNotBlank(publicEndpoint)) {
+            base = publicEndpoint;
+        } else if (StringUtils.isNotBlank(endpoint)) {
+            base = endpoint;
+        } else {
+            base = "https://" + bucket + ".s3." + region + ".amazonaws.com";
+            return base;
+        }
+
+        String normalized = base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
+        return normalized + "/" + bucket;
+    }
+
+    public String getAvatarBucket() {
+        String avatarBucket = s3ClientConfig.getAvatarBucket();
+        return StringUtils.isNotBlank(avatarBucket) ? avatarBucket : s3ClientConfig.getBucket();
+    }
+
+    private static byte[] hmacSha256(byte[] key, String data) {
+        try {
+            String algorithm = "HmacSHA256";
+            Mac mac = Mac.getInstance(algorithm);
+            mac.init(new SecretKeySpec(key, algorithm));
+            return mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to calculate HMAC", e);
+        }
+    }
+
+    private static byte[] getSignatureKey(String key, String dateStamp, String regionName, String serviceName) {
+        byte[] kSecret = ("AWS4" + key).getBytes(StandardCharsets.UTF_8);
+        byte[] kDate = hmacSha256(kSecret, dateStamp);
+        byte[] kRegion = hmacSha256(kDate, regionName);
+        byte[] kService = hmacSha256(kRegion, serviceName);
+        return hmacSha256(kService, "aws4_request");
+    }
+
+    private static String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder(bytes.length * 2);
+        for (byte b : bytes) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
     }
 
     /**

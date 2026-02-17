@@ -8,7 +8,6 @@ import com.labOS.backend.model.vo.LoginUserVO;
 import com.labOS.backend.model.vo.UserVO;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
-import org.springframework.web.multipart.MultipartFile;
 
 /**
  * User service
@@ -132,15 +131,15 @@ public interface UserService extends IService<User> {
     boolean changePassword(Long userId, String oldPassword, String newPassword, String confirmPassword);
 
     /**
-     * Upload & replace user avatar:
-     * - Upload image to S3 under labOS/UserAvatar/{userId}/...
-     * - Delete previous avatar object in S3 (if any)
-     * - Update user.userAvatar (permanent URL) and user.userAvatarKey (S3 key)
+     * Update user avatar after client uploads to S3 via presigned URL:
+     * - Validate avatar key (must belong to user folder)
+     * - Update user.userAvatar (CloudFront URL) and user.userAvatarKey (S3 key)
+     * - Delete previous avatar object in S3 (best-effort)
      *
      * @param userId logged-in user id
-     * @param avatarFile avatar image file
+     * @param avatarKey s3 object key for the new avatar
      * @return permanent URL of the new avatar
      */
-    String updateUserAvatar(Long userId, MultipartFile avatarFile);
+    String updateUserAvatar(Long userId, String avatarKey);
 
 }

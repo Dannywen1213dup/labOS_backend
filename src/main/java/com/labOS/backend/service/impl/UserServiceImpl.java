@@ -19,12 +19,8 @@ import com.labOS.backend.service.UserService;
 import com.labOS.backend.utils.SqlUtils;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import cn.dev33.satoken.stp.StpUtil;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +28,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 
@@ -45,8 +40,6 @@ import javax.annotation.Resource;
 @Service
 @Slf4j
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
-
-    private static final long MAX_AVATAR_SIZE_BYTES = 5L * 1024 * 1024;
 
     @Resource
     private S3Manager s3Manager;
@@ -333,20 +326,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public String updateUserAvatar(Long userId, MultipartFile avatarFile) {
+    public String updateUserAvatar(Long userId, String avatarKey) {
         if (userId == null || userId <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "Invalid userId");
         }
-        if (avatarFile == null || avatarFile.isEmpty()) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Avatar file is required");
-        }
-        if (avatarFile.getSize() > MAX_AVATAR_SIZE_BYTES) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Avatar file is too large (max 5MB)");
-        }
-
-        String contentType = avatarFile.getContentType();
-        if (StringUtils.isBlank(contentType) || !contentType.toLowerCase().startsWith("image/")) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Avatar file must be an image");
+        if (StringUtils.isBlank(avatarKey)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Avatar key is required");
         }
 
         User dbUser = this.getById(userId);
@@ -354,72 +339,54 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "User not found");
         }
 
-        String oldAvatarKey = dbUser.getUserAvatarKey();
-
-        // Build S3 key: labOS/UserAvatar/{userId}/avatar_{timestamp}_{uuid}.ext
         String folderPath = s3Manager.getOrCreateUserAvatarFolder(String.valueOf(userId));
-
-        String originalName = avatarFile.getOriginalFilename();
-        String safeName = s3Manager.sanitizeFileName(StringUtils.defaultIfBlank(originalName, "avatar"));
-        String ext = "";
-        int dot = safeName.lastIndexOf('.');
-        if (dot >= 0 && dot < safeName.length() - 1) {
-            ext = safeName.substring(dot); // keep extension
-        } else {
-            // fallback based on content-type
-            if (contentType.toLowerCase().contains("png")) {
-                ext = ".png";
-            } else if (contentType.toLowerCase().contains("jpeg") || contentType.toLowerCase().contains("jpg")) {
-                ext = ".jpg";
-            } else if (contentType.toLowerCase().contains("webp")) {
-                ext = ".webp";
-            } else if (contentType.toLowerCase().contains("gif")) {
-                ext = ".gif";
-            } else {
-                ext = ".img";
-            }
+        if (!avatarKey.startsWith(folderPath)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Avatar key does not match user folder");
         }
 
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
-        String uuid = UUID.randomUUID().toString().replace("-", "");
-        String newFileName = "avatar_" + timestamp + "_" + uuid + ext;
-        String newAvatarKey = folderPath + newFileName;
+        String fileName = avatarKey.substring(folderPath.length());
+        if (StringUtils.isBlank(fileName) || fileName.contains("/")) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Invalid avatar file name");
+        }
 
-        // Upload to S3
-        ObjectMetadata metadata = new ObjectMetadata();
-        metadata.setContentLength(avatarFile.getSize());
-        metadata.setContentType(contentType);
+        if (!fileName.matches("^[A-Za-z0-9_-]+\\.[A-Za-z0-9]+$")) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Avatar file name must be {version}.{ext}");
+        }
+        String ext = fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
+        if (!ext.matches("^(png|jpg|jpeg|webp|gif)$")) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Unsupported image format");
+        }
 
-        try (InputStream is = avatarFile.getInputStream()) {
-            s3Manager.putObject(newAvatarKey, is, metadata);
+        ObjectMetadata metadata;
+        try {
+            metadata = s3Manager.getObjectMetadata(s3Manager.getAvatarBucket(), avatarKey);
         } catch (Exception e) {
-            log.error("Failed to upload avatar to S3, userId={}, key={}", userId, newAvatarKey, e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "Avatar upload failed");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Avatar object not found");
+        }
+        String contentType = metadata.getContentType();
+        if (StringUtils.isBlank(contentType) || !contentType.toLowerCase().startsWith("image/")) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Avatar file must be an image");
+        }
+        long sizeBytes = metadata.getContentLength();
+        if (sizeBytes <= 0 || sizeBytes > 1024L * 1024) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Avatar file is too large (max 1MB)");
         }
 
-        // Permanent URL (served by backend to avoid S3 public ACL / AccessDenied issues)
-        String permanentUrl = "/user/avatar/view/" + userId + "?v=" + timestamp;
+        String oldAvatarKey = dbUser.getUserAvatarKey();
+        String permanentUrl = s3Manager.getCloudFrontUrl(avatarKey);
 
-        // Update DB first (so user always points to a valid uploaded avatar)
         User update = new User();
         update.setId(userId);
         update.setUserAvatar(permanentUrl);
-        update.setUserAvatarKey(newAvatarKey);
+        update.setUserAvatarKey(avatarKey);
         boolean ok = this.updateById(update);
         if (!ok) {
-            // Rollback new object best-effort if DB update fails
-            try {
-                s3Manager.deleteObject(newAvatarKey);
-            } catch (Exception ex) {
-                log.warn("Failed to rollback uploaded avatar after DB update failure, key={}", newAvatarKey, ex);
-            }
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "Failed to update user avatar");
         }
 
-        // Delete previous avatar object after successful upload+DB update (best-effort)
-        if (StringUtils.isNotBlank(oldAvatarKey) && !oldAvatarKey.equals(newAvatarKey)) {
+        if (StringUtils.isNotBlank(oldAvatarKey) && !oldAvatarKey.equals(avatarKey)) {
             try {
-                s3Manager.deleteObject(oldAvatarKey);
+                s3Manager.deleteObject(s3Manager.getAvatarBucket(), oldAvatarKey);
             } catch (Exception e) {
                 log.warn("Failed to delete previous avatar from S3, oldKey={}", oldAvatarKey, e);
             }

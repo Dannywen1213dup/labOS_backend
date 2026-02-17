@@ -44,6 +44,11 @@ public class S3ClientConfig {
     private String bucket;
 
     /**
+     * Dedicated bucket name for user avatar assets
+     */
+    private String avatarBucket;
+
+    /**
      * Custom endpoint URL (for MinIO or other S3-compatible services)
      * If set, will use this endpoint instead of AWS S3
      * This is the internal endpoint used by the backend to communicate with S3/MinIO
@@ -56,6 +61,11 @@ public class S3ClientConfig {
      * This should be the host-accessible URL (e.g., http://localhost:9000 for MinIO)
      */
     private String publicEndpoint;
+
+    /**
+     * CloudFront domain for serving public assets (e.g., https://dxxxx.cloudfront.net)
+     */
+    private String cloudfrontDomain;
 
     @Bean
     public AmazonS3 amazonS3Client() {
@@ -126,4 +136,3 @@ public class S3ClientConfig {
         return builder.build();
     }
 }
-

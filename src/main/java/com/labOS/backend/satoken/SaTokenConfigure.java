@@ -34,7 +34,7 @@ public class SaTokenConfigure {
     @Autowired(required = false)
     private V2Config v2Config;
 
-    @Value("${cors.allowed-origins:https://ai4labos.com,https://www.ai4labos.com,http://localhost:8080,http://localhost:5173,http://localhost:3000}")
+    @Value("${cors.allowed-origins:https://ai4labos.com,https://www.ai4labos.com}")
     private String allowedOrigins;
 
     @Value("${cors.enable-all-origins:false}")
